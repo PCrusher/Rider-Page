@@ -513,10 +513,12 @@ try {
     check($rep['devices'][0]['k'] === 'phone' && count($rep['clicks']) === 3 && count($rep['series']) === 7, 'devices, clicks and one entry per day are reported');
     check(Analytics::csv('days', 7)[6][1] === 4, 'the CSV rows hold the daily totals');
 
+    Db::run("UPDATE sponsors SET url = 'https://example.org/partner' WHERE name = 'Example Partner'");
     $home = Site::response('/')['body'];
     check(str_contains($home, 'data-t="sponsor:Example Partner"') && str_contains($home, 'data-t="social:instagram"') && str_contains($home, 'data-beacon="/t"'), 'links carry a tracking label and the script gets the beacon address while statistics are on');
     Settings::set('stats_on', '0');
     check(!str_contains(Site::response('/')['body'], 'data-beacon'), 'no beacon address while statistics are off');
+    Db::run("UPDATE sponsors SET url = '' WHERE name = 'Example Partner'");
     Settings::set('stats_on', '1');
 
     Db::run("UPDATE hits SET day = ? WHERE kind = 'page'", [date('Y-m-d', strtotime('-200 days'))]);
