@@ -1,5 +1,5 @@
 <?php
-/** Variables: $version $manifest $latest $repo $check $backups */
+/** Variables: $version $manifest $latest $repo $check $backups $history */
 $can = $latest['ok'] && $latest['newer'];
 $m = $latest['manifest'] ?? [];
 $blocked = (bool)array_filter($check, static fn($c) => !$c['ok']);
@@ -14,7 +14,10 @@ $blocked = (bool)array_filter($check, static fn($c) => !$c['ok']);
     <p><b>You are up to date.</b> <span class="muted">Latest release: <?= e((string)$latest['version']) ?>.</span></p>
   <?php else: ?>
     <p><b>Version <?= e((string)$latest['version']) ?> is available.</b></p>
-    <?php if (!empty($m['changelog'])): ?><p style="white-space:pre-line"><?= e((string)$m['changelog']) ?></p><?php endif; ?>
+    <?php if (!empty($latest['notes'])): ?>
+      <h2 style="margin-top:14px">What is new in <?= e((string)$latest['version']) ?></h2>
+      <div class="prose-admin"><?= Markdown::render((string)$latest['notes']) ?></div>
+    <?php elseif (!empty($m['changelog'])): ?><p style="white-space:pre-line"><?= e((string)$m['changelog']) ?></p><?php endif; ?>
     <?php foreach ((array)($m['warnings'] ?? []) as $w): ?><div class="box warn"><?= e((string)$w) ?></div><?php endforeach; ?>
     <?php if (!empty($m['breaking'])): ?>
       <div class="box bad"><b>This update contains changes that can affect customisations.</b> Read the notes above and check the release page before continuing.</div>
@@ -45,6 +48,17 @@ $blocked = (bool)array_filter($check, static fn($c) => !$c['ok']);
     <?php if ($blocked): ?><span class="muted small">Fix the red items first, or update by hand (see the README).</span><?php endif; ?>
   </div>
 </form>
+<?php endif; ?>
+
+<?php if ($history): ?>
+<h2>Version history</h2>
+<p class="muted small">What changed in each version, newest first. Your version is marked.</p>
+<?php foreach ($history as $i => $h): ?>
+  <details class="box hist"<?= $i === 0 ? ' open' : '' ?>>
+    <summary><b><?= e($h['version']) ?></b><?= $h['version'] === $version ? ' <span class="pill ok">installed</span>' : '' ?></summary>
+    <div class="prose-admin"><?= $h['html'] ?></div>
+  </details>
+<?php endforeach; ?>
 <?php endif; ?>
 
 <h2>Update source</h2>

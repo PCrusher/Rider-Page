@@ -7,6 +7,20 @@
     if (msg && !window.confirm(msg)) { e.preventDefault(); }
   });
 
+  /* Mobile menu: the button opens and closes the list of pages. */
+  var side = document.getElementById('side');
+  var menuBtn = side && side.querySelector('.menu-btn');
+  if (side && menuBtn) {
+    var setOpen = function (open) {
+      side.classList.toggle('open', open);
+      menuBtn.setAttribute('aria-expanded', String(open));
+    };
+    menuBtn.addEventListener('click', function () { setOpen(!side.classList.contains('open')); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && side.classList.contains('open')) { setOpen(false); menuBtn.focus(); }
+    });
+  }
+
   /* Installer: show MySQL fields only when MySQL is chosen. */
   var drv = document.getElementById('db_driver');
   var mysql = document.getElementById('mysql_fields');

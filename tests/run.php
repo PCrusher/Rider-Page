@@ -61,6 +61,7 @@ foreach (['app', 'themes', 'assets', 'storage', 'uploads'] as $d) {
 }
 copy("$src/index.php", "$tmp/index.php");
 copy("$src/manifest.json", "$tmp/manifest.json");
+copy("$src/CHANGELOG.md", "$tmp/CHANGELOG.md");
 
 define('RP_ROOT', $tmp);
 $_SERVER['HTTP_HOST'] = 'localhost';
@@ -277,6 +278,12 @@ try {
     check($r['ok'] && Db::val("SELECT mail_status FROM messages WHERE ip_hash = '" . substr(hash('sha256', '198.51.100.10' . rp_config()['secret']), 0, 32) . "'") === 'failed', 'a failed email still saves the message and marks it');
     Mailer::$transport = null;
     Db::run('DELETE FROM messages');
+
+    echo "Changelog\n";
+    $hist = Changelog::entries();
+    check(count($hist) >= 10 && $hist[0]['version'] === Updater::version(), 'the version history is read from CHANGELOG.md, newest first', $hist ? $hist[0]['version'] : 'empty');
+    check(str_contains($hist[0]['html'], '<li>') && !str_contains($hist[0]['html'], '<script'), 'an entry is rendered as a list');
+    check(str_contains(end($hist)['html'], 'First release'), 'the oldest entry is the first release');
 
     echo "Photo credits\n";
     check(credit_html('') === '', 'no name and no link gives no credit');

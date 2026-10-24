@@ -87,7 +87,7 @@ final class Updater
         $out = [
             'ok' => true, 'error' => '', 'repo' => $repo, 'checked' => time(),
             'version' => $tag, 'newer' => version_compare($tag, self::version(), '>'),
-            'zip' => $zip, 'sha' => $sha, 'page' => (string)($rel['html_url'] ?? ''),
+            'zip' => $zip, 'sha' => $sha, 'page' => (string)($rel['html_url'] ?? ''), 'notes' => (string)($rel['body'] ?? ''),
             'manifest' => $manifest + ['min_php' => '8.1', 'breaking' => false, 'changelog' => (string)($rel['body'] ?? ''), 'warnings' => []],
         ];
         if ($zip === '' || $sha === '') {

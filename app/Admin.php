@@ -1137,6 +1137,7 @@ final class Admin
             'repo' => Updater::repo(),
             'check' => Updater::preflight(null),
             'backups' => Updater::backups(),
+            'history' => Changelog::entries(),
         ], 'Updates');
     }
 

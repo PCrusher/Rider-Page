@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "Changed: QR login now works the other way round. You show a QR code on the Account page of a logged-in computer, scan it with your phone and tap once; the phone is logged in. Valid 20 seconds, once, password asked every time.",
+  "changelog": "New: version history and release notes on the Updates page, a clearer side menu, and a menu button for phones.",
   "warnings": []
 }

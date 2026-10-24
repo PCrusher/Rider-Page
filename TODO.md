@@ -5,11 +5,19 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 
 ## Next
 
-- [!] Get a real install running (olly-wilkins.co.uk) and fix what the first run shows
 - [!] Click through installer and admin in a browser: every form, image upload, blog editor, section order, appearance
 - [!] Test MySQL/MariaDB (only SQLite is covered by the tests)
 - [!] Test the one-click update from a real release (0.1.x to 0.2.0) on the live host
 - [ ] Check `https://domain/storage/config.php` is blocked by the installer itself and warn if it is not
+- [!] Sponsor links: automatic `rel="sponsored"` and an optional "Ad" label per sponsor (paid links need it for search engines, and in Germany for advertising law)
+- [!] Local analytics, cookie-free: page views, visitors per day (salted daily hash, no IP stored), referrers, devices, top posts, clicks on sponsor and social links, CSV export, raw data deleted after 30 days
+- [!] Favicon upload and a default share image for links on social media (the site has neither)
+- [ ] Contact messages: delete automatically after the period set in the privacy policy, export and delete everything of one person
+- [ ] Backup download in the admin (database and uploads as one zip) next to the restore button
+- [ ] Setting to redirect to HTTPS and send the HSTS header
+- [ ] Privacy policy template: mention that admin logins store IP address and browser for the device list
+- [ ] Email page: check SPF and DKIM of the sender domain and warn when contact mails are likely to land in spam
+- [ ] GitHub Actions: move to newer action versions (GitHub warns that Node 20 is being retired)
 - [ ] Admin area in German (the public texts already have English and German)
 - [ ] Restore button in *Updates*: restore a backup from `storage/backups` without FTP
 
@@ -90,3 +98,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.8.0: Pages with footer links and guided legal pages (impressum, privacy, sponsorship notice)
 - 0.9.0: QR login with a phone, list of logged-in devices with log out
 - 0.10.0: QR login reversed: the logged-in computer shows the code, the phone logs in
+- 0.11.0: version history and release notes in Updates, side menu with more contrast, menu button for phones

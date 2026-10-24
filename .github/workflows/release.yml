@@ -29,6 +29,13 @@ jobs:
         run: |
           find . -name '*.php' -not -path './docs/*' -print0 | xargs -0 -n1 php -l > /dev/null
           php tests/run.php
+      - name: Release notes and history
+        run: |
+          # Notes of this version, taken from CHANGELOG.md, are shown in the admin before updating.
+          awk -v v="$VERSION" '$0 == "## " v {f=1; next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "Rider Page $VERSION" > notes.md; fi
+          # The package carries the whole history, so the Updates page can show it after an update.
+          cp CHANGELOG.md app/changelog.md
       - name: Build package
         run: |
           zip -r -X "rider-page-$VERSION.zip" \
@@ -42,4 +49,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             "rider-page-$VERSION.zip" "rider-page-$VERSION.zip.sha256" manifest.json \
-            --title "Rider Page $VERSION" --generate-notes
+            --title "Rider Page $VERSION" --notes-file notes.md

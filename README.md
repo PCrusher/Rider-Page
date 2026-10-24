@@ -55,7 +55,7 @@ Open `/admin` on your site.
 | Appearance | 10 presets, accent colour, background and text colour, with a contrast warning |
 | 404 page, Redirects | Edit the page for unknown addresses; redirect old addresses to new ones; see which addresses were not found |
 | Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |
-| Updates | Check for and install new versions |
+| Updates | Check for and install new versions; shows what is new and the history of every version |
 | Messages, Email | Inbox for the contact form; SMTP settings so messages reach you reliably |
 | Pages, Legal pages | Own pages (about, legal notice, privacy). Guided set-up of the legal pages for your country, as drafts you review and publish |
 | Users | Add people and give them a level: Admin, Editor or Author (admins only) |

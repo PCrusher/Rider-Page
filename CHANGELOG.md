@@ -3,6 +3,13 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.11.0
+
+- **Version history on the Updates page.** Before you update, the page shows what is new in the version that is available (taken from this changelog). Below it, a history of every version with details of what changed, newest first, with your version marked. The history comes with every update, so it is always current.
+- **Side menu with more contrast.** The menu on the left now has its own dark background, bold group headings with a divider between the groups, a clearer hover state and a strongly highlighted current page, in light and dark mode.
+- **Menu for phones reworked.** On a phone the pages are no longer squeezed into wrapped lines. A bar at the top shows the name of the current page and a *Menu* button that opens the full list in large, easy-to-tap rows, with *View site*, *Log out* and your version at the bottom. Escape closes it. Without JavaScript the list is simply always visible.
+- No database change.
+
 ## 0.10.0
 
 - **QR login works the other way round.** On the *Account* page of a computer where you are logged in, you show a QR code (after typing your password). You scan it with your phone's camera, tap one button, and the phone is logged in without a password. The code is valid for 20 seconds, works once, and is shown again by hand. It replaces the login-page QR code with the 4-digit number from 0.9.0, which started on the computer you wanted to log in on.
