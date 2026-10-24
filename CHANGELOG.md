@@ -3,6 +3,13 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.3.0
+
+- Editable 404 page: own heading and message, optionally with the latest blog posts. *Admin -> 404 page*.
+- Redirects: send an old address to a new one (301 permanent or 302 temporary) so renamed posts keep their visitors and ranking. Real pages are never overridden; loops and system addresses are refused. *Admin -> Redirects*.
+- List of addresses that were not found (address and count only, no visitor data, at most 500), with one-click "Create redirect".
+- Adds two small tables (`redirects`, `not_found`). Existing content is not touched.
+
 ## 0.2.0
 
 - Maintenance mode: switch the page offline for visitors in *Admin → Maintenance*, with your own heading and message. Visitors get a 503 page with `noindex` so search rankings are kept; you stay logged in and see the real site with a reminder bar. Off by default.

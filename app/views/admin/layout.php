@@ -12,6 +12,8 @@ $items = [
     ['sections', 'Sections', '/admin/sections', 'Page'],
     ['appearance', 'Appearance', '/admin/appearance', null],
     ['maintenance', 'Maintenance', '/admin/maintenance', null],
+    ['errorpage', '404 page', '/admin/errorpage', null],
+    ['redirects', 'Redirects', '/admin/redirects', null],
     ['update', 'Updates', '/admin/update', 'System'],
     ['account', 'Account', '/admin/account', null],
 ];

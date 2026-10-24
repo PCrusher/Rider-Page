@@ -62,12 +62,35 @@ final class Site
                 return self::page(200, $html);
             }
         }
-        return self::page(404, self::layout([
-            'title' => t('e404.title'),
-            'content' => '<div class="in page-msg"><h1>' . e(t('e404.title')) . '</h1><p>' . e(t('e404.text'))
-                . '</p><p><a class="btn" href="' . e(url('/')) . '">' . e(t('e404.home')) . '</a></p></div>',
-            'noindex' => true,
-        ]));
+        return self::notFound($path);
+    }
+
+    /** Redirect if the owner set one up for this address, otherwise show the 404 page. */
+    private static function notFound(string $path): array
+    {
+        if ($path !== '/__preview-404') {
+            $r = Redirects::find($path);
+            if ($r) {
+                Redirects::hit((int)$r['id']);
+                $code = (int)$r['code'] === 302 ? 302 : 301;
+                return self::page($code, '', ['Location: ' . Redirects::target((string)$r['to_url'])]);
+            }
+            Redirects::log($path);
+        }
+
+        $title = trim((string)Settings::get('e404_title', '')) ?: t('e404.title');
+        $text = trim((string)Settings::get('e404_text', '')) ?: t('e404.text');
+        $html = '<div class="in page-msg"><h1>' . e($title) . '</h1><p>' . nl2br(e($text)) . '</p>';
+        $posts = Settings::get('e404_posts', '1') === '1' ? self::posts(3) : [];
+        if ($posts) {
+            $html .= '<p class="tier">' . e(t('e404.latest')) . '</p><ul class="notfound-list">';
+            foreach ($posts as $p) {
+                $html .= '<li><a href="' . e(url('/blog/' . $p['slug'])) . '">' . e($p['title']) . '</a></li>';
+            }
+            $html .= '</ul>';
+        }
+        $html .= '<p><a class="btn" href="' . e(url('/')) . '">' . e(t('e404.home')) . '</a></p></div>';
+        return self::page(404, self::layout(['title' => $title, 'content' => $html, 'noindex' => true]));
     }
 
     /* ---------- maintenance mode ---------- */

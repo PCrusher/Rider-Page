@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: maintenance mode. Switch your page offline for visitors from the admin area. It is off by default.",
+  "changelog": "New: editable 404 page, redirects from old addresses, and a list of addresses that were not found. Adds two small database tables.",
   "warnings": []
 }

@@ -209,6 +209,11 @@ a.sp:hover { border-color: var(--s-accent); }
 .maint-bar a { color: inherit; font-weight: 700; }
 .page-msg { padding-block: 18vh; }
 .page-msg p { max-width: 52ch; color: var(--s-muted); }
+.page-msg p + p, .page-msg ul + p { margin-top: 14px; }
+.notfound-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.notfound-list li { padding-block: 6px; border-bottom: 1px solid var(--s-line); max-width: 52ch; }
+.notfound-list a { text-decoration: none; }
+.notfound-list a:hover { text-decoration: underline; }
 .page-msg h1 { font-size: var(--h2-size); margin-bottom: 12px; }
 
 /* --- Manuscript: centred, quiet, text first --- */

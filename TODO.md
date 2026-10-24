@@ -35,9 +35,8 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] Two-factor login for the admin
 - [ ] User levels: Admin (everything), Editor (content, blog, photos; no updates, maintenance, appearance or accounts), Author (own blog posts only, drafts need approval)
 - [ ] More than one user, invite by email, user list in the admin
-- [ ] Editable 404 page: own heading and text, optional list of latest posts, per language
-- [ ] Redirects: old address to new address (301), with a list in the admin and a "pages that were not found" log that suggests redirects
-- [ ] Optional: suggest the closest post or section on the 404 page
+- [ ] 404 page: suggest the closest matching post or section; separate 404 text per language
+- [ ] Redirects: import and export as CSV, wildcard rules (for example a whole old folder)
 
 ## Design
 
@@ -75,3 +74,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.1.0: installer, admin, one-page site, blog, FAQ, 10 presets, updater with backup and rollback, tests, release workflow
 - 0.1.1: readable message for old PHP versions, fatal errors logged to `storage/logs/php-errors.log`
 - 0.2.0: maintenance mode in the admin
+- 0.3.0: editable 404 page, redirects, list of addresses that were not found

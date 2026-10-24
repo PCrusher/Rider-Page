@@ -120,6 +120,10 @@ final class Admin
             self::appearance($post);
         } elseif ($sec === 'maintenance') {
             self::maintenance($post);
+        } elseif ($sec === 'errorpage') {
+            self::errorPage($post);
+        } elseif ($sec === 'redirects') {
+            self::redirects($act, $post);
         } elseif ($sec === 'update') {
             self::update($act, $post);
         } elseif ($sec === 'account') {
@@ -191,8 +195,18 @@ final class Admin
             'steps' => $steps,
             'hidden' => $hidden,
             'maintenance' => Site::maintenanceOn(),
+            'notFound' => self::notFoundCount(),
             'update' => Updater::cached(),
         ], 'Dashboard');
+    }
+
+    private static function notFoundCount(): int
+    {
+        try {
+            return (int)Db::val('SELECT COUNT(*) FROM not_found');
+        } catch (Throwable) {
+            return 0;
+        }
     }
 
     /* ---------- profile ---------- */
@@ -580,6 +594,83 @@ final class Admin
             'defaultTitle' => t('maint.title'),
             'defaultText' => t('maint.text'),
         ], 'Maintenance');
+    }
+
+    /* ---------- 404 page and redirects ---------- */
+
+    private static function errorPage(bool $post): void
+    {
+        if ($post) {
+            Settings::setMany([
+                'e404_title' => mb_substr(trim((string)($_POST['title'] ?? '')), 0, 120),
+                'e404_text' => mb_substr(trim((string)($_POST['text'] ?? '')), 0, 1000),
+                'e404_posts' => !empty($_POST['posts']) ? '1' : '0',
+            ]);
+            flash('Saved.');
+            redirect('/admin/errorpage');
+        }
+        self::view('errorpage', [
+            'title' => (string)Settings::get('e404_title', ''),
+            'text' => (string)Settings::get('e404_text', ''),
+            'posts' => Settings::get('e404_posts', '1') === '1',
+            'defaultTitle' => t('e404.title'),
+            'defaultText' => t('e404.text'),
+        ], '404 page');
+    }
+
+    private static function redirects(string $act, bool $post): void
+    {
+        $errors = [];
+        $form = ['id' => 0, 'from' => '', 'to' => '', 'code' => 301];
+
+        if ($post) {
+            if ($act === 'save') {
+                $id = (int)($_POST['id'] ?? 0);
+                $form = [
+                    'id' => $id, 'from' => trim((string)($_POST['from'] ?? '')),
+                    'to' => trim((string)($_POST['to'] ?? '')), 'code' => (int)($_POST['code'] ?? 301),
+                ];
+                [$data, $err] = Redirects::prepare($form['from'], $form['to'], $form['code'], $id);
+                if ($err === null && $data !== null) {
+                    if ($id) {
+                        Db::update('redirects', $data, 'id = ?', [$id]);
+                    } else {
+                        Db::insert('redirects', $data + ['hits' => 0, 'created_at' => now()]);
+                    }
+                    Db::delete('not_found', 'path = ?', [$data['from_path']]);
+                    flash('Redirect saved: ' . $data['from_path'] . ' → ' . $data['to_url']);
+                    redirect('/admin/redirects');
+                }
+                $errors[] = (string)$err;
+            } elseif ($act === 'delete') {
+                Db::delete('redirects', 'id = ?', [(int)($_POST['id'] ?? 0)]);
+                flash('Redirect deleted.');
+                redirect('/admin/redirects');
+            } elseif ($act === 'dismiss') {
+                Db::delete('not_found', 'path = ?', [(string)($_POST['path'] ?? '')]);
+                redirect('/admin/redirects');
+            } elseif ($act === 'clearlog') {
+                Db::run('DELETE FROM not_found');
+                flash('The list was cleared.');
+                redirect('/admin/redirects');
+            } else {
+                redirect('/admin/redirects');
+            }
+        } else {
+            $edit = (int)($_GET['edit'] ?? 0);
+            if ($edit && ($row = Db::row('SELECT * FROM redirects WHERE id = ?', [$edit]))) {
+                $form = ['id' => $edit, 'from' => (string)$row['from_path'], 'to' => (string)$row['to_url'], 'code' => (int)$row['code']];
+            } elseif (isset($_GET['from'])) {
+                $form['from'] = Redirects::normalize((string)$_GET['from']);
+            }
+        }
+
+        self::view('redirects', [
+            'errors' => $errors,
+            'form' => $form,
+            'rows' => Db::rows('SELECT * FROM redirects ORDER BY id DESC'),
+            'log' => Db::rows('SELECT * FROM not_found ORDER BY hits DESC, last_seen DESC LIMIT 100'),
+        ], 'Redirects');
     }
 
     /* ---------- updates ---------- */

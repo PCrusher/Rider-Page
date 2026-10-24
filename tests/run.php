@@ -130,6 +130,41 @@ try {
     check(str_contains(Presets::css(), '--s-accent:#FF0000'), 'accent override applied');
     Settings::set('color_accent', '');
 
+    echo "404 and redirects\n";
+    $r = Site::response('/does-not-exist');
+    check($r['status'] === 404, 'unknown address is 404');
+    check((int)Db::val("SELECT COUNT(*) FROM not_found WHERE path = '/does-not-exist'") === 1, '404 address is logged');
+    Site::response('/does-not-exist');
+    check((int)Db::val("SELECT hits FROM not_found WHERE path = '/does-not-exist'") === 2, 'repeated 404 is counted');
+    Site::response('/__preview-404');
+    check((int)Db::val("SELECT COUNT(*) FROM not_found WHERE path = '/__preview-404'") === 0, 'preview is not logged');
+    Settings::set('e404_title', 'Lost?');
+    $body = Site::response('/zzz')['body'];
+    check(str_contains($body, 'Lost?'), 'custom 404 heading');
+    check(str_contains($body, '/blog/welcome'), '404 page lists the latest posts');
+    Settings::set('e404_posts', '0');
+    check(!str_contains(Site::response('/zzz')['body'], '/blog/welcome'), '404 posts list can be switched off');
+    Settings::set('e404_title', '');
+    Settings::set('e404_posts', '1');
+
+    [$d, $e] = Redirects::prepare('/old-post/', '/blog/welcome', 301);
+    check($e === null && $d['from_path'] === '/old-post', 'redirect is accepted and normalised', (string)$e);
+    Db::insert('redirects', $d + ['hits' => 0, 'created_at' => now()]);
+    $r = Site::response('/old-post');
+    check($r['status'] === 301 && in_array('Location: /blog/welcome', $r['headers'], true), 'redirect answers 301 with Location');
+    check((int)Db::val("SELECT hits FROM redirects WHERE from_path = '/old-post'") === 1, 'redirect use is counted');
+    [$d2] = Redirects::prepare('/blog', '/elsewhere', 301);
+    Db::insert('redirects', $d2 + ['hits' => 0, 'created_at' => now()]);
+    check(Site::response('/blog')['status'] === 200, 'a real page is never shadowed by a redirect');
+    Db::run("DELETE FROM redirects WHERE from_path = '/blog'");
+    check(Redirects::prepare('/admin/x', '/blog', 301)[1] !== null, 'system addresses are rejected');
+    check(Redirects::prepare('/a', '/a', 301)[1] !== null, 'redirect to itself is rejected');
+    check(Redirects::prepare('/blog/welcome', '/old-post', 301)[1] !== null, 'redirect loop is rejected');
+    check(Redirects::prepare('/old-post', '/y', 301)[1] !== null, 'duplicate is rejected');
+    check(Redirects::prepare('/x', 'javascript:alert(1)', 301)[1] !== null, 'unsafe target is rejected');
+    [$d3] = Redirects::prepare('https://example.com/Old/', 'https://other.test/new', 302);
+    check($d3['from_path'] === '/Old' && $d3['code'] === 302, 'full URL as old address is reduced to its path');
+
     echo "Maintenance\n";
     Settings::set('maintenance', '1');
     Settings::set('maintenance_title', 'Back soon');
@@ -187,11 +222,11 @@ try {
     };
 
     $good = $build('0.2.0', [
-        'app/migrations/0002_add_tagline_note.php' => "<?php\nreturn static function (): void { Db::addColumn('posts', 'note', \"VARCHAR(100) NOT NULL DEFAULT ''\"); };\n",
+        'app/migrations/0900_test_note.php' => "<?php\nreturn static function (): void { Db::addColumn('posts', 'note', \"VARCHAR(100) NOT NULL DEFAULT ''\"); };\n",
     ], 'good');
     $r = Updater::applyLocal($good, '0.2.0');
     check($r['ok'], 'update package applied', $r['error']);
-    check(is_file($tmp . '/app/migrations/0002_add_tagline_note.php'), 'new code is in place');
+    check(is_file($tmp . '/app/migrations/0900_test_note.php'), 'new code is in place');
     check(Updater::version() === '0.2.0', 'manifest shows the new version');
     check(Site::response('/')['status'] === 503, 'site shows maintenance while update is pending');
     $f = Updater::finish();
@@ -202,13 +237,13 @@ try {
     check(Db::val('SELECT COUNT(*) FROM posts') > 0, 'content survived the update');
 
     $bad = $build('0.3.0', [
-        'app/migrations/0003_breaks.php' => "<?php\nreturn static function (): void { throw new RuntimeException('boom'); };\n",
+        'app/migrations/0901_test_breaks.php' => "<?php\nreturn static function (): void { throw new RuntimeException('boom'); };\n",
     ], 'bad');
     $r = Updater::applyLocal($bad, '0.3.0');
     check($r['ok'], 'bad package applied (to test rollback)', $r['error']);
     $f = Updater::finish();
     check(!$f['ok'], 'failing migration is reported');
-    check(!is_file($tmp . '/app/migrations/0003_breaks.php'), 'rollback removed the new code');
+    check(!is_file($tmp . '/app/migrations/0901_test_breaks.php'), 'rollback removed the new code');
     check(Updater::version() === '0.2.0', 'rollback restored the previous version');
     check(!is_file($tmp . '/storage/update-pending.json'), 'pending flag cleared');
 } catch (Throwable $e) {

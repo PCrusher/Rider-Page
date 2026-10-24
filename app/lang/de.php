@@ -36,6 +36,7 @@ return [
     'e404.title' => 'Seite nicht gefunden',
     'e404.text' => 'Diese Seite gibt es nicht.',
     'e404.home' => 'Zur Startseite',
+    'e404.latest' => 'Neueste Beiträge',
     'maint.title' => 'Gleich wieder da',
     'maint.text' => 'Die Seite wird gerade aktualisiert und ist gleich wieder erreichbar.',
 ];
