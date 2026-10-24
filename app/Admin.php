@@ -586,6 +586,24 @@ final class Admin
 
     private static function sections(string $act, bool $post): void
     {
+        if ($post && $act === 'texts') {
+            foreach (['results', 'sponsors', 'media', 'blog', 'faq'] as $sid) {
+                Settings::setMany([
+                    'sec_' . $sid . '_title' => mb_substr(trim((string)($_POST['title_' . $sid] ?? '')), 0, 80),
+                    'sec_' . $sid . '_kicker' => mb_substr(trim((string)($_POST['kicker_' . $sid] ?? '')), 0, 80),
+                    'sec_' . $sid . '_show_title' => !empty($_POST['show_title_' . $sid]) ? '1' : '0',
+                    'sec_' . $sid . '_show_kicker' => !empty($_POST['show_kicker_' . $sid]) ? '1' : '0',
+                ]);
+            }
+            foreach (Site::TIERS as $tier) {
+                Settings::setMany([
+                    'tier_' . $tier . '_label' => mb_substr(trim((string)($_POST['tier_label_' . $tier] ?? '')), 0, 80),
+                    'tier_' . $tier . '_show' => !empty($_POST['tier_show_' . $tier]) ? '1' : '0',
+                ]);
+            }
+            flash('Saved.');
+            redirect('/admin/sections');
+        }
         $id = (string)($_POST['id'] ?? '');
         if ($post && in_array($id, Site::SECTIONS, true)) {
             if ($act === 'move') {
@@ -611,7 +629,26 @@ final class Admin
                 'empty' => !Site::hasContent($sid),
             ];
         }
-        self::view('sections', ['rows' => $rows], 'Sections');
+        $texts = [];
+        foreach (['results', 'sponsors', 'media', 'blog', 'faq'] as $sid) {
+            $texts[$sid] = [
+                'label' => t('sec.' . $sid),
+                'title' => (string)Settings::get('sec_' . $sid . '_title', ''),
+                'kicker' => (string)Settings::get('sec_' . $sid . '_kicker', ''),
+                'defaultKicker' => $sid === 'blog' ? '' : t('kick.' . $sid),
+                'show_title' => Settings::get('sec_' . $sid . '_show_title', '1') !== '0',
+                'show_kicker' => Settings::get('sec_' . $sid . '_show_kicker', '1') !== '0',
+            ];
+        }
+        $tiers = [];
+        foreach (Site::TIERS as $tier) {
+            $tiers[$tier] = [
+                'label' => (string)Settings::get('tier_' . $tier . '_label', ''),
+                'default' => t('tier.' . $tier),
+                'show' => Settings::get('tier_' . $tier . '_show', '1') !== '0',
+            ];
+        }
+        self::view('sections', ['rows' => $rows, 'texts' => $texts, 'tiers' => $tiers], 'Sections');
     }
 
     /* ---------- appearance ---------- */

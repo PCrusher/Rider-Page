@@ -3,6 +3,13 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.7.0
+
+- Section headings and small labels are editable, and each can be switched off (*Admin -> Sections*, "Headings and labels"). The heading also names the section in the menu.
+- Partner levels (title partner, partners, supporters) can be renamed, and the name above each group can be switched off.
+- A switched-off heading is only hidden visually. It stays in the page for screen readers and search engines.
+- No database change; existing sites look the same until you edit a text.
+
 ## 0.6.0
 
 - Photo credits: an optional photographer name and link for the main photo (*Profile*), each gallery photo (*Photos*), blog cover images (*Blog*) and pictures inside a post. Shown as "Photo: Name" on the picture, with the name linked when a link is given. Nothing is shown when the fields are empty.

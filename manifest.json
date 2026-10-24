@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: optional photo credits (photographer name and link) for the main photo, gallery photos, blog covers and pictures inside posts. Adds columns to the media and posts tables.",
+  "changelog": "New: rename the section headings and the partner levels, and switch headings and labels on or off (Admin -> Sections).",
   "warnings": []
 }

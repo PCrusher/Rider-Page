@@ -5,11 +5,11 @@ $i = 0;
 ?>
 <section class="sec<?= $alt ? ' alt' : '' ?>" id="sponsors">
   <div class="in">
-    <div class="sec-h"><h2><?= e(t('sec.sponsors')) ?></h2><span class="kicker"><?= e(t('kick.sponsors')) ?></span></div>
+    <?= Site::head($titles, 'sponsors') ?>
     <?php foreach ($tiers as $tier => $list): ?>
       <?php if (!$list) { continue; } ?>
       <div>
-        <p class="tier"><?= e(t('tier.' . $tier)) ?></p>
+        <?php if ($tierLabels[$tier]['show']): ?><p class="tier"><?= e($tierLabels[$tier]['label']) ?></p><?php endif; ?>
         <div class="sponsors <?= e($grids[$tier]) ?>">
           <?php foreach ($list as $s): ?>
             <?php

@@ -51,7 +51,7 @@ Open `/admin` on your site.
 | Profile | Name, introduction, photo, badge, contact email, YouTube video, search description, language |
 | Social accounts, Results, Partners, Photos, FAQ | Lists you can add to, edit, reorder and delete |
 | Blog | Posts with a cover image, optional photo credits, pictures, links and YouTube. Drafts and future dates are supported |
-| Sections | Order of the sections and switch sections on or off. Empty sections hide themselves |
+| Sections | Order of the sections, switch sections on or off, rename headings and partner levels. Empty sections hide themselves |
 | Appearance | 10 presets, accent colour, background and text colour, with a contrast warning |
 | 404 page, Redirects | Edit the page for unknown addresses; redirect old addresses to new ones; see which addresses were not found |
 | Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |

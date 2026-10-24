@@ -125,6 +125,52 @@ final class Site
         return self::page(404, self::layout(['title' => $title, 'content' => $html, 'noindex' => true]));
     }
 
+    /* ---------- section headings and partner levels ---------- */
+
+    private const TITLED = ['results', 'sponsors', 'media', 'blog', 'faq', 'contact'];
+    public const TIERS = ['title', 'partner', 'supporter'];
+
+    /** Heading and small label of every section, with the owner's texts and on/off choices. */
+    public static function titles(): array
+    {
+        $out = [];
+        foreach (self::TITLED as $id) {
+            $defaultKicker = in_array($id, ['blog', 'contact'], true) ? '' : t('kick.' . $id);
+            $out[$id] = [
+                'title' => trim((string)Settings::get('sec_' . $id . '_title', '')) ?: t('sec.' . $id),
+                'kicker' => trim((string)Settings::get('sec_' . $id . '_kicker', '')) ?: $defaultKicker,
+                'show_title' => Settings::get('sec_' . $id . '_show_title', '1') !== '0',
+                'show_kicker' => Settings::get('sec_' . $id . '_show_kicker', '1') !== '0',
+            ];
+        }
+        return $out;
+    }
+
+    /** Names of the partner levels, each with an on/off switch for the small label above the group. */
+    public static function tierLabels(): array
+    {
+        $out = [];
+        foreach (self::TIERS as $tier) {
+            $out[$tier] = [
+                'label' => trim((string)Settings::get('tier_' . $tier . '_label', '')) ?: t('tier.' . $tier),
+                'show' => Settings::get('tier_' . $tier . '_show', '1') !== '0',
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * The heading row of a section. A switched-off heading stays in the page for screen readers and
+     * search engines, only hidden visually. $right replaces the small label (used by the blog link).
+     */
+    public static function head(array $titles, string $id, string $right = ''): string
+    {
+        $x = $titles[$id];
+        $h = '<h2' . ($x['show_title'] ? '' : ' class="sr-only"') . '>' . e($x['title']) . '</h2>';
+        $r = $right !== '' ? $right : ($x['show_kicker'] && $x['kicker'] !== '' ? '<span class="kicker">' . e($x['kicker']) . '</span>' : '');
+        return '<div class="sec-h' . (($x['show_title'] || $r !== '') ? '' : ' bare') . '">' . $h . $r . '</div>';
+    }
+
     /* ---------- maintenance mode ---------- */
 
     public static function maintenanceOn(): bool
@@ -322,6 +368,8 @@ final class Site
             'hasBlog' => in_array('blog', $sections, true) || count(self::posts(1)) > 0,
             'nav' => array_values(array_filter($sections, static fn($id) => $id !== 'contact')),
             'hasContact' => in_array('contact', $sections, true),
+            'titles' => self::titles(),
+            'tierLabels' => self::tierLabels(),
             'contactState' => self::$contactState ?? ['error' => '', 'values' => ['name' => '', 'email' => '', 'message' => '']],
             'sent' => (string)($_GET['sent'] ?? '') === '1',
             'formToken' => Contact::token(),

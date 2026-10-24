@@ -1,6 +1,6 @@
 <section class="sec<?= $alt ? ' alt' : '' ?>" id="media">
   <div class="in">
-    <div class="sec-h"><h2><?= e(t('sec.media')) ?></h2><span class="kicker"><?= e(t('kick.media')) ?></span></div>
+    <?= Site::head($titles, 'media') ?>
     <?php if ($p['video_id']): ?>
       <div>
         <?= Markdown::video($p['video_id']) ?>

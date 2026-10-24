@@ -47,7 +47,7 @@ $homeUrl = url('/');
       <ul>
         <?php foreach ($nav as $id): ?>
           <?php $href = $id === 'blog' && !$isHome ? url('/blog') : ($isHome ? '' : $homeUrl) . '#' . $id; ?>
-          <li><a class="l" href="<?= e($href) ?>" data-sec="<?= e($id) ?>"><?= e(t('sec.' . $id)) ?></a></li>
+          <li><a class="l" href="<?= e($href) ?>" data-sec="<?= e($id) ?>"><?= e($titles[$id]['title']) ?></a></li>
         <?php endforeach; ?>
         <?php if ($hasContact): ?>
           <li><a class="btn primary" href="<?= e(($isHome ? '' : $homeUrl) . '#contact') ?>"><?= e(t('cta.inquiry')) ?></a></li>

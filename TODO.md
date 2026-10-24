@@ -29,7 +29,6 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] Gallery lightbox with captions and keyboard navigation
 - [ ] Social share image generated per blog post
 - [ ] More languages for the public texts (French, Spanish, Dutch, Swedish)
-- [ ] Per-section headings and kickers editable in the admin
 - [ ] Custom CSS box for people who want small tweaks without touching code
 - [ ] Support a user theme folder in `storage/` that overrides templates and survives updates
 - [ ] Import and export: all content as one file (move to another host, or backup)
@@ -83,3 +82,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.5.0: contact form with inbox and SMTP settings (email address no longer shown)
 - 0.5.1: fix for the design cards in Appearance
 - 0.6.0: optional photo credits (name and link) for photos
+- 0.7.0: editable section headings, small labels and partner level names, each switchable

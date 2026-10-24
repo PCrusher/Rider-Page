@@ -300,6 +300,22 @@ try {
     Settings::set('hero_image', '');
     Db::run("UPDATE posts SET cover = '', cover_credit = '', cover_credit_url = '' WHERE slug = 'welcome'");
 
+    echo "Headings and partner levels\n";
+    $body = Site::response('/')['body'];
+    check(str_contains($body, '<h2>Partners</h2>') && str_contains($body, 'class="tier">Title partner<'), 'default headings and level names');
+    Settings::setMany(['sec_sponsors_title' => 'Our supporters', 'sec_sponsors_kicker' => 'With thanks', 'tier_title_label' => 'Main sponsor']);
+    $body = Site::response('/')['body'];
+    check(substr_count($body, 'Our supporters') >= 2, 'custom heading is used in the section and in the menu');
+    check(str_contains($body, 'With thanks') && str_contains($body, 'Main sponsor'), 'custom small label and level name are shown');
+    check(!str_contains($body, '<h2>Partners</h2>'), 'the default heading is replaced');
+    Settings::setMany(['sec_sponsors_show_title' => '0', 'sec_sponsors_show_kicker' => '0', 'tier_title_show' => '0']);
+    $body = Site::response('/')['body'];
+    check(str_contains($body, '<h2 class="sr-only">Our supporters</h2>'), 'a switched-off heading stays in the page for screen readers');
+    check(!str_contains($body, 'With thanks') && !str_contains($body, 'Main sponsor'), 'switched-off label and level name are not shown');
+    check(str_contains($body, 'sec-h bare'), 'a heading row without anything visible collapses');
+    Settings::setMany(['sec_sponsors_title' => '', 'sec_sponsors_kicker' => '', 'sec_sponsors_show_title' => '1', 'sec_sponsors_show_kicker' => '1', 'tier_title_label' => '', 'tier_title_show' => '1']);
+    check(str_contains(Site::response('/')['body'], '<h2>Partners</h2>'), 'empty texts fall back to the defaults');
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

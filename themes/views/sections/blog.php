@@ -1,6 +1,6 @@
 <section class="sec<?= $alt ? ' alt' : '' ?>" id="blog">
   <div class="in">
-    <div class="sec-h"><h2><?= e(t('sec.blog')) ?></h2><a class="more" href="<?= e(url('/blog')) ?>"><?= e(t('blog.all')) ?></a></div>
+    <?= Site::head($titles, 'blog', '<a class="more" href="' . e(url('/blog')) . '">' . e(t('blog.all')) . '</a>') ?>
     <div class="cards">
       <?php foreach ($latest as $post): ?>
         <a class="card" href="<?= e(url('/blog/' . $post['slug'])) ?>">
