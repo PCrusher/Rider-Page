@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: contact form instead of a visible email address. Messages are emailed to you (SMTP or server mail) and saved in an inbox. Adds a messages table.",
+  "changelog": "Fix: the design cards on the Appearance page were drawn broken. Styling only.",
   "warnings": []
 }

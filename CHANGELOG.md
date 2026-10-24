@@ -3,6 +3,10 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.5.1
+
+- Fix: the design cards on *Admin -> Appearance* were drawn broken (torn borders, stray white blocks). Styling only.
+
 ## 0.5.0
 
 - Contact form replaces the visible email address. Visitors write name, email and message; the message is emailed to the contact address from the profile and saved in **Admin -> Messages** (new inbox, with unread markers and a notice on the dashboard).
