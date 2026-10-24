@@ -84,16 +84,16 @@ td img.thumb { height: 36px; width: auto; max-width: 90px; object-fit: cover; bo
 .checks .dot.warn { background: var(--warn); }
 
 .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.preset { position: relative; }
+.preset { position: relative; display: block; }
 .preset input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
-.preset .card { border: 2px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.preset .card { display: block; border: 2px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
 .preset input:checked + .card { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .preset input:focus-visible + .card { outline: 2px solid var(--accent); outline-offset: 2px; }
 .preset .sw { display: flex; height: 54px; }
 .preset .sw i { flex: 1; }
 .preset .sw i:first-child { flex: 3; }
-.preset .meta { padding: 8px 12px 10px; }
-.preset .meta b { display: block; }
+.preset .meta { display: block; padding: 8px 12px 10px; }
+.preset .meta b, .preset .meta .muted { display: block; }
 .colorrow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .colorrow .lbl { flex: 1 1 200px; }
 
