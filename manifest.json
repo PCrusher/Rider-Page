@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: log in to the admin area with a phone by scanning a QR code (valid 20 seconds, off by default), and see where you are logged in on the Account page, with log out for each device. Adds two tables and a column.",
+  "changelog": "Changed: QR login now works the other way round. You show a QR code on the Account page of a logged-in computer, scan it with your phone and tap once; the phone is logged in. Valid 20 seconds, once, password asked every time.",
   "warnings": []
 }

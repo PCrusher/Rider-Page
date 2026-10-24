@@ -3,6 +3,13 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.10.0
+
+- **QR login works the other way round.** On the *Account* page of a computer where you are logged in, you show a QR code (after typing your password). You scan it with your phone's camera, tap one button, and the phone is logged in without a password. The code is valid for 20 seconds, works once, and is shown again by hand. It replaces the login-page QR code with the 4-digit number from 0.9.0, which started on the computer you wanted to log in on.
+- Safety: the code is only created for a logged-in user who switched QR login on, the password is asked every time, at most 5 codes per 10 minutes, the phone must tap a button (so link previews can not use the code), and every login shows up in the list of devices where it can be ended.
+- The computer is told when the phone has opened the code and when the login happened.
+- Adds the table `qr_tokens`. The 0.9.0 table `qr_logins` is no longer used and stays empty.
+
 ## 0.9.0
 
 - **Login with a QR code**: the login page can show a QR code. You scan it with a phone that is already logged in, type the 4-digit number shown on the computer's screen, and the computer is logged in without a password. The code is valid for 20 seconds and is refreshed by hand. It is off by default and each user switches it on under *Account* (after entering their password).

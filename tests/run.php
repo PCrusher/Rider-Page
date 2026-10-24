@@ -402,49 +402,49 @@ try {
 
     check(is_file($tmp . '/assets/qrcode.js') && str_contains((string)file_get_contents($tmp . '/assets/qrcode.js'), 'createSvgTag'), 'the QR code library is part of the package');
     $_SERVER['REMOTE_ADDR'] = '203.0.113.50';
-    $q = QrLogin::create();
-    check(is_array($q) && strlen($q['token']) === 64 && strlen($q['poll']) === 64 && preg_match('/^\d{4}$/', $q['code']) === 1 && $q['token'] !== $q['poll'], 'QR request has a token, a separate poll secret and a 4-digit number');
-    check(str_contains($q['url'], '/admin/qr/approve?t=' . $q['token']), 'QR address points to the approval page');
-    check(QrLogin::state($q['poll'])['state'] === 'pending' && QrLogin::state($q['poll'])['left'] <= 20, 'a new code is pending for at most 20 seconds');
-    check(QrLogin::state($q['token'])['state'] === 'expired', 'the QR token can not be used to poll');
-    check(QrLogin::claim($q['poll']) === null, 'nothing can be claimed before approval');
-    check(str_contains((string)QrLogin::approve($q['token'], $uid, $q['code']), 'switched off'), 'QR login is off for a user by default');
+    check(QrLogin::create($uid) === null, 'no QR code can be made while QR login is off for the user');
     Db::run('UPDATE users SET qr_enabled = 1 WHERE id = ?', [$uid]);
-    check(QrLogin::approve($q['token'], $uid, $q['code'] === '0000' ? '1111' : '0000') !== null, 'a wrong number is refused');
-    check(QrLogin::approve($q['token'], $uid, $q['code']) === null, 'the right number approves');
-    check(QrLogin::state($q['poll'])['state'] === 'approved', 'the computer sees the approval');
-    check(QrLogin::claim(str_repeat('a', 64)) === null, 'a wrong poll secret claims nothing');
-    check(QrLogin::claim($q['poll']) === $uid, 'the computer picks up the login');
-    check(QrLogin::claim($q['poll']) === null && QrLogin::state($q['poll'])['state'] === 'used', 'an approved login can be used only once');
+    $q = QrLogin::create($uid);
+    $tok = is_array($q) ? substr($q['url'], strrpos($q['url'], 't=') + 2) : '';
+    check(is_array($q) && strlen($tok) === 64 && $q['ttl'] === 20 && str_contains($q['url'], '/admin/qr/login?t='), 'a logged-in user gets a code with a 64-character token that is valid for 20 seconds');
+    check(Db::val('SELECT token_hash FROM qr_tokens WHERE id = ?', [$q['id']]) === hash('sha256', $tok) && Db::val('SELECT COUNT(*) FROM qr_tokens WHERE token_hash = ?', [$tok]) == 0, 'only a hash of the token is stored');
+    check(QrLogin::state($q['id'], $uid) === 'waiting' && QrLogin::state($q['id'], $uid + 99) === 'expired', 'the computer sees "waiting", and nobody else can look at the code');
+    check(QrLogin::open(str_repeat('a', 64)) === null && QrLogin::consume(str_repeat('a', 64)) === null && QrLogin::open('nonsense') === null, 'a wrong token does nothing');
+    check(QrLogin::open($tok) !== null && QrLogin::state($q['id'], $uid) === 'opened', 'opening the address moves the code to the confirm step');
+    check(QrLogin::consume($tok) === $uid, 'the tap logs the user in');
+    check(QrLogin::consume($tok) === null && QrLogin::open($tok) === null && QrLogin::state($q['id'], $uid) === 'used', 'a code works only once');
 
-    $q = QrLogin::create();
-    Db::run('UPDATE qr_logins SET created = ? WHERE poll_hash = ?', [time() - 30, hash('sha256', $q['poll'])]);
-    check(QrLogin::state($q['poll'])['state'] === 'expired', 'a code older than 20 seconds has expired');
-    check(QrLogin::scan($q['token']) === null && str_contains((string)QrLogin::approve($q['token'], $uid, $q['code']), 'no longer valid'), 'an expired code can not be scanned or approved');
+    $q = QrLogin::create($uid);
+    $tok = substr($q['url'], strrpos($q['url'], 't=') + 2);
+    Db::run('UPDATE qr_tokens SET created = ? WHERE id = ?', [time() - 30, $q['id']]);
+    check(QrLogin::state($q['id'], $uid) === 'expired' && QrLogin::open($tok) === null && QrLogin::consume($tok) === null, 'a code older than 20 seconds is dead');
 
-    $q = QrLogin::create();
-    check(QrLogin::scan($q['token']) !== null && QrLogin::state($q['poll'])['state'] === 'scanned', 'scanning in time moves the request to the confirm step');
-    Db::run('UPDATE qr_logins SET created = ? WHERE poll_hash = ?', [time() - 60, hash('sha256', $q['poll'])]);
-    check(QrLogin::approve($q['token'], $uid, $q['code']) === null, 'after scanning, the phone has extra time to type the number');
-    QrLogin::claim($q['poll']);
+    $q = QrLogin::create($uid);
+    $tok = substr($q['url'], strrpos($q['url'], 't=') + 2);
+    QrLogin::open($tok);
+    Db::run('UPDATE qr_tokens SET created = ? WHERE id = ?', [time() - 60, $q['id']]);
+    check(QrLogin::consume($tok) === $uid, 'after the code was opened in time, the phone has a little longer to tap');
 
-    $q = QrLogin::create();
-    $wrong = $q['code'] === '0000' ? '1111' : '0000';
-    QrLogin::approve($q['token'], $uid, $wrong);
-    QrLogin::approve($q['token'], $uid, $wrong);
-    check(str_contains((string)QrLogin::approve($q['token'], $uid, $wrong), 'cancelled') && QrLogin::state($q['poll'])['state'] === 'failed', 'three wrong numbers cancel the request');
-    check(QrLogin::approve($q['token'], $uid, $q['code']) !== null, 'a cancelled request can not be approved any more');
+    $q = QrLogin::create($uid);
+    $tok = substr($q['url'], strrpos($q['url'], 't=') + 2);
+    QrLogin::open($tok);
+    Db::run('UPDATE qr_tokens SET opened = ? WHERE id = ?', [time() - 60, $q['id']]);
+    check(QrLogin::consume($tok) === null, 'but not for ever after it was opened');
 
-    $q = QrLogin::create();
-    QrLogin::deny($q['token']);
-    check(QrLogin::state($q['poll'])['state'] === 'denied', 'a denied request is reported to the computer');
+    $q = QrLogin::create($uid);
+    $tok = substr($q['url'], strrpos($q['url'], 't=') + 2);
+    Db::run('UPDATE users SET qr_enabled = 0 WHERE id = ?', [$uid]);
+    check(QrLogin::open($tok) === null && QrLogin::consume($tok) === null, 'switching QR login off kills open codes');
+    Db::run('UPDATE users SET qr_enabled = 1 WHERE id = ?', [$uid]);
+    QrLogin::revokeAll($uid);
+    check((int)Db::val('SELECT COUNT(*) FROM qr_tokens WHERE user_id = ?', [$uid]) === 0, 'all open codes of a user can be removed');
 
-    $limited = false;
-    for ($i = 0; $i < 30 && !$limited; $i++) {
-        $limited = QrLogin::create() === null;
+    $made = 0;
+    for ($i = 0; $i < 8; $i++) {
+        $made += QrLogin::create($uid) !== null ? 1 : 0;
     }
-    check($limited, 'too many codes from one address are refused');
-    Db::run('DELETE FROM qr_logins');
+    check($made === 5, 'at most five codes per ten minutes per user');
+    Db::run('DELETE FROM qr_tokens');
     Db::run('UPDATE users SET qr_enabled = 0');
 
     echo "Images\n";

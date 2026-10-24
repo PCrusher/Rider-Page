@@ -59,7 +59,7 @@ Open `/admin` on your site.
 | Messages, Email | Inbox for the contact form; SMTP settings so messages reach you reliably |
 | Pages, Legal pages | Own pages (about, legal notice, privacy). Guided set-up of the legal pages for your country, as drafts you review and publish |
 | Users | Add people and give them a level: Admin, Editor or Author (admins only) |
-| Account | Change your name, email and password; see and end your logins; switch on QR login |
+| Account | Change your name, email and password; see and end your logins; show a QR code to log in on your phone |
 
 ## Updating
 

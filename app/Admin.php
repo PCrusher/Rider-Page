@@ -98,14 +98,9 @@ final class Admin
             Auth::logout();
             redirect('/admin/login');
         }
-        if (in_array($path, ['/admin/qr/new', '/admin/qr/status', '/admin/qr/claim'], true)) {
-            self::qrPublic($path, $post);
+        if ($path === '/admin/qr/login') {
+            self::qrLogin($post);
             return;
-        }
-        if ($path === '/admin/qr/approve' && Auth::user() === null) {
-            // A phone that is not logged in yet: log in first, then come back to this request.
-            $_SESSION['after_login'] = '/admin/qr/approve?t=' . preg_replace('/[^a-f0-9]/', '', (string)($_GET['t'] ?? ''));
-            flash('Log in on this phone with your password first. You will be taken back to the request.', 'error');
         }
 
         self::$user = Auth::gate();
@@ -144,7 +139,7 @@ final class Admin
         } elseif ($sec === 'maintenance') {
             self::maintenance($post);
         } elseif ($sec === 'qr') {
-            self::qrApprove($act, $post);
+            self::qr($act, $post);
         } elseif ($sec === 'pages') {
             self::pages($act, $post);
         } elseif ($sec === 'legal') {
@@ -199,72 +194,58 @@ final class Admin
             $email = trim((string)($_POST['email'] ?? ''));
             $r = Auth::attempt($email, (string)($_POST['password'] ?? ''));
             if ($r === true) {
-                $next = (string)($_SESSION['after_login'] ?? '');
-                unset($_SESSION['after_login']);
-                redirect(str_starts_with($next, '/admin/qr/approve') ? $next : '/admin');
+                redirect('/admin');
             }
             $error = (string)$r;
         }
-        echo tpl('app/views/admin/login', [
-            'error' => $error, 'email' => $email,
-            'qr' => is_file(RP_ROOT . '/assets/qrcode.js'),
+        echo tpl('app/views/admin/login', ['error' => $error, 'email' => $email]);
+    }
+
+    /* ---------- login on a phone with a QR code ---------- */
+
+    /** The phone: opens the address from the QR code, shows the account and asks for one tap. */
+    private static function qrLogin(bool $post): void
+    {
+        header('Referrer-Policy: no-referrer');
+        $token = (string)($post ? ($_POST['t'] ?? '') : ($_GET['t'] ?? ''));
+        $invalid = 'This code is not valid any more. Codes only work for a few seconds. Show a new code on your computer and scan it again.';
+        if ($post) {
+            csrf_check();
+            $uid = QrLogin::consume($token);
+            if ($uid === null) {
+                echo tpl('app/views/admin/qr_confirm', ['token' => '', 'user' => null, 'error' => $invalid]);
+                return;
+            }
+            Auth::login($uid, 'qr');
+            redirect('/admin');
+        }
+        $row = QrLogin::open($token);
+        echo tpl('app/views/admin/qr_confirm', [
+            'token' => $row ? $token : '',
+            'user' => $row ? Users::find((int)$row['user_id']) : null,
+            'error' => $row ? '' : $invalid,
         ]);
     }
 
-    /* ---------- login with a QR code ---------- */
-
-    /** Endpoints used by the login page of the computer. They need no login, only the poll secret. */
-    private static function qrPublic(string $path, bool $post): void
+    /** The computer (already logged in): asks for a code and watches what the phone does with it. */
+    private static function qr(string $act, bool $post): void
     {
-        if ($path === '/admin/qr/status' && !$post) {
-            json_out(QrLogin::state((string)($_GET['p'] ?? '')));
-        }
-        if (!$post) {
-            json_out(['ok' => false], 405);
-        }
-        csrf_check();
-        if ($path === '/admin/qr/new') {
-            $r = QrLogin::create();
+        $uid = (int)self::$user['id'];
+        if ($act === 'new' && $post) {
+            $u = Db::row('SELECT * FROM users WHERE id = ?', [$uid]);
+            if (!$u || !password_verify((string)($_POST['current'] ?? ''), (string)$u['password_hash'])) {
+                json_out(['ok' => false, 'error' => 'The password is not correct.'], 403);
+            }
+            $r = QrLogin::create($uid);
             if ($r === null) {
-                json_out(['ok' => false, 'error' => 'Too many codes were requested. Please wait a few minutes.'], 429);
+                json_out(['ok' => false, 'error' => 'QR login is off for your account, or you asked for too many codes. Wait a few minutes.'], 429);
             }
             json_out(['ok' => true] + $r);
         }
-        $uid = QrLogin::claim((string)($_POST['p'] ?? ''));
-        if ($uid === null) {
-            json_out(['ok' => false, 'error' => 'The login could not be completed. Show a new code.'], 400);
+        if ($act === 'check' && !$post) {
+            json_out(['state' => QrLogin::state((int)($_GET['id'] ?? 0), $uid)]);
         }
-        Auth::login($uid, 'qr');
-        json_out(['ok' => true, 'redirect' => url('/admin')]);
-    }
-
-    /** The phone: shows who is asking and asks for the number from the computer's screen. */
-    private static function qrApprove(string $act, bool $post): void
-    {
-        if ($act !== 'approve') {
-            redirect('/admin');
-        }
-        $token = (string)($post ? ($_POST['t'] ?? '') : ($_GET['t'] ?? ''));
-        $me = (int)self::$user['id'];
-        if ($post && !empty($_POST['deny'])) {
-            QrLogin::deny($token);
-            flash('The login request was denied.');
-            redirect('/admin');
-        }
-        $error = '';
-        if ($post) {
-            $err = QrLogin::approve($token, $me, (string)($_POST['code'] ?? ''));
-            if ($err === null) {
-                self::view('qr_done', [], 'Login approved');
-                return;
-            }
-            $error = $err;
-        }
-        $row = QrLogin::scan($token);
-        self::view('qr_approve', [
-            'token' => $token, 'error' => $error, 'info' => $row ? QrLogin::describe($row) : null,
-            'enabled' => (int)self::$user['qr_enabled'] === 1,
-        ], 'Approve login');
+        redirect('/admin/account');
     }
 
     /* ---------- dashboard ---------- */
@@ -1215,14 +1196,12 @@ final class Admin
         $must = (int)self::$user['must_change'] === 1;
         $uid = (int)self::$user['id'];
         if ($post && ($_POST['do'] ?? '') === 'qr') {
-            $u = Db::row('SELECT * FROM users WHERE id = ?', [$uid]);
-            if (!$u || !password_verify((string)($_POST['current'] ?? ''), (string)$u['password_hash'])) {
-                flash('The password is not correct.', 'error');
-            } else {
-                $on = !empty($_POST['qr_enabled']);
-                Db::update('users', ['qr_enabled' => $on ? 1 : 0], 'id = ?', [$uid]);
-                flash($on ? 'QR login is on for your account.' : 'QR login is off for your account.');
+            $on = !empty($_POST['qr_enabled']);
+            Db::update('users', ['qr_enabled' => $on ? 1 : 0], 'id = ?', [$uid]);
+            if (!$on) {
+                QrLogin::revokeAll($uid);
             }
+            flash($on ? 'QR login is on. You can now show a code below.' : 'QR login is off.');
             redirect('/admin/account');
         }
         if ($post && ($_POST['do'] ?? '') === 'logout') {
@@ -1265,6 +1244,7 @@ final class Admin
                 Db::update('users', $data, 'id = ?', [(int)$u['id']]);
                 if ($new !== '') {
                     Auth::revokeOthers($uid);
+                    QrLogin::revokeAll($uid);
                 }
                 flash($new !== '' ? 'Saved. Your other devices were logged out.' : 'Saved.');
                 redirect('/admin/account');

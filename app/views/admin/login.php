@@ -1,4 +1,4 @@
-<?php /** Variables: $error $email $qr */ ?>
+<?php /** Variables: $error $email */ ?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -22,23 +22,6 @@
     <div class="actions"><button class="btn primary" type="submit">Log in</button><a href="<?= e(url('/')) ?>">Back to the site</a></div>
   </form>
 
-  <?php if ($qr): ?>
-  <div id="qr-login" class="qr" hidden
-       data-new="<?= e(url('/admin/qr/new')) ?>" data-status="<?= e(url('/admin/qr/status')) ?>"
-       data-claim="<?= e(url('/admin/qr/claim')) ?>" data-csrf="<?= e(csrf_token()) ?>">
-    <div class="qr-or"><span>or</span></div>
-    <button type="button" class="btn" id="qr-start">Log in with your phone</button>
-    <p class="hint">No password needed. You must already be logged in on your phone and have switched on QR login under Account.</p>
-    <div id="qr-box" hidden>
-      <div id="qr-img" class="qr-img" role="img" aria-label="QR code for logging in"></div>
-      <p class="qr-code">Number to type on your phone: <b id="qr-num"></b></p>
-      <p class="muted small" id="qr-msg" aria-live="polite"></p>
-      <button type="button" class="btn sm" id="qr-refresh" hidden>Show a new code</button>
-    </div>
-  </div>
-  <script src="<?= e(asset('qrcode.js')) ?>" defer></script>
-  <script src="<?= e(asset('qr-login.js')) ?>" defer></script>
-  <?php endif; ?>
 </div>
 </body>
 </html>

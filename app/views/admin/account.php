@@ -20,21 +20,40 @@
 </form>
 
 <?php if (!$must): ?>
-<h2>Login with a QR code</h2>
-<form method="post" action="<?= e(url('/admin/account')) ?>" class="box">
-  <?= csrf_field() ?>
-  <input type="hidden" name="do" value="qr">
+<h2>Log in on your phone with a QR code</h2>
+<div class="box">
   <?php if (!$qrAvailable): ?>
-    <p class="muted" style="margin-top:0">QR login is not available on this installation (the file <code>assets/qrcode.js</code> is missing).</p>
+    <p class="muted" style="margin:0">QR login is not available on this installation (the file <code>assets/qrcode.js</code> is missing).</p>
   <?php else: ?>
-    <p class="muted" style="margin-top:0">Log in on a computer without typing a password: the login page shows a QR code, you scan it with this phone, type the 4-digit number from the computer's screen, and the computer is logged in. The code is valid for 20 seconds and has to be refreshed by hand.</p>
-    <label class="check"><input type="checkbox" name="qr_enabled" value="1"<?= $qr ? ' checked' : '' ?>> Allow logging in by QR code</label>
-    <label class="f" for="qr_current">Your password</label>
-    <input type="password" id="qr_current" name="current" autocomplete="current-password" required>
-    <p class="hint">The phone must be logged in to the admin area in its own browser. Anyone who can unlock that phone while it is logged in can approve a login, so only switch this on if your phone is protected with a code or fingerprint.</p>
-    <div class="actions"><button class="btn primary" type="submit">Save</button></div>
+    <p class="muted" style="margin-top:0">Show a QR code here, scan it with your phone's camera, tap one button, and your phone is logged in without typing a password. The code works for 20 seconds, once, and has to be shown again by hand.</p>
+    <form method="post" action="<?= e(url('/admin/account')) ?>">
+      <?= csrf_field() ?>
+      <input type="hidden" name="do" value="qr">
+      <label class="check" style="margin-top:0"><input type="checkbox" name="qr_enabled" value="1"<?= $qr ? ' checked' : '' ?>> Allow logging in with a QR code</label>
+      <div class="actions" style="margin-top:12px"><button class="btn" type="submit">Save</button></div>
+    </form>
+    <?php if ($qr): ?>
+      <div id="qr-account" class="qr-account" hidden
+           data-new="<?= e(url('/admin/qr/new')) ?>" data-check="<?= e(url('/admin/qr/check')) ?>" data-csrf="<?= e(csrf_token()) ?>" data-refresh="<?= e(url('/admin/account')) ?>">
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <div id="qr-ask">
+          <label class="f" for="qr-pw" style="margin-top:0">Your password</label>
+          <input type="password" id="qr-pw" autocomplete="current-password" style="max-width:20rem">
+          <p class="hint">Asked every time, because the code logs in whoever scans it.</p>
+          <div class="actions"><button type="button" class="btn primary" id="qr-show">Show QR code</button></div>
+        </div>
+        <div id="qr-shown" hidden>
+          <div id="qr-img" class="qr-img" role="img" aria-label="QR code for logging in on your phone"></div>
+          <p class="muted small" id="qr-msg" aria-live="polite"></p>
+          <button type="button" class="btn sm" id="qr-again" hidden>Show a new code</button>
+        </div>
+      </div>
+      <script src="<?= e(asset('qrcode.js')) ?>" defer></script>
+      <script src="<?= e(asset('qr-account.js')) ?>" defer></script>
+    <?php endif; ?>
+    <p class="hint" style="margin-bottom:0">Use this only for your own phone, and not while someone can look at your screen. Anyone who scans the code in time can log in as you. Every login appears in the list below, where you can end it.</p>
   <?php endif; ?>
-</form>
+</div>
 
 <h2>Where you are logged in</h2>
 <div class="tbl-wrap">

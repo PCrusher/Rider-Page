@@ -89,3 +89,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.7.0: editable section headings, small labels and partner level names, each switchable
 - 0.8.0: Pages with footer links and guided legal pages (impressum, privacy, sponsorship notice)
 - 0.9.0: QR login with a phone, list of logged-in devices with log out
+- 0.10.0: QR login reversed: the logged-in computer shows the code, the phone logs in

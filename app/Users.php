@@ -66,6 +66,7 @@ final class Users
             if ($in['password'] !== '') {
                 // A new password ends the user's other logins; the browser that is changing it stays in.
                 $id === (int)($_SESSION['uid'] ?? 0) ? Auth::revokeOthers($id) : Auth::revokeAll($id);
+                QrLogin::revokeAll($id);
             }
             return $id;
         }
@@ -89,6 +90,7 @@ final class Users
         // The posts stay; they now belong to the person who removed the user.
         Db::update('posts', ['author_id' => $actingId], 'author_id = ?', [$id]);
         Auth::revokeAll($id);
+        QrLogin::revokeAll($id);
         Db::delete('users', 'id = ?', [$id]);
         return null;
     }
