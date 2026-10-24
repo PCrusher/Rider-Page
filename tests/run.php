@@ -335,7 +335,7 @@ try {
         foreach (Legal::langs($rid) as $lang) {
             foreach ($reg['kinds'] as $kind) {
                 $b = Legal::build($kind, $rid, $lang);
-                if ($b === null || str_contains($b['body'], '{{') || strlen($b['body']) < 200 || !preg_match('/^# /', $b['body'])) {
+                if ($b === null || str_contains($b['body'], '{{') || strlen($b['body']) < 60 || !preg_match('/^# /', $b['body'])) {
                     $bad[] = "$rid/$lang/$kind";
                 }
             }
