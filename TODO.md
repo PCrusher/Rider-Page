@@ -42,6 +42,8 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 
 ## Design
 
+- [ ] Photo credits in the lightbox and on blog list thumbnails; credit for sponsor logos is not needed
+
 - [ ] Visual preview of each preset in *Appearance* (small live thumbnail instead of colour strips)
 - [ ] More layouts (a minimal link-in-bio style, a magazine style for writers)
 - [ ] Font choice per preset (a few pairings, not free choice)
@@ -79,3 +81,5 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.3.0: editable 404 page, redirects, list of addresses that were not found
 - 0.4.0: user levels (admin, editor, author), Users page, post approval
 - 0.5.0: contact form with inbox and SMTP settings (email address no longer shown)
+- 0.5.1: fix for the design cards in Appearance
+- 0.6.0: optional photo credits (name and link) for photos

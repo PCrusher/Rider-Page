@@ -18,9 +18,12 @@ $types = social_types();
       <?php endif; ?>
       <?php if ($hasContact): ?><a class="btn primary" href="#contact"><?= e(t('cta.work')) ?></a><?php endif; ?>
     </div>
-    <div class="ph hero-photo<?= $p['hero'] === '' ? ' empty' : '' ?>">
-      <?php if ($p['hero'] !== ''): ?><img src="<?= e(url($p['hero'])) ?>" alt="<?= e($p['name']) ?>" fetchpriority="high"><?php endif; ?>
-      <?php if ($p['sticker'] !== ''): ?><div class="sticker"><?= e($p['sticker']) ?></div><?php endif; ?>
+    <div class="hero-media">
+      <div class="ph hero-photo<?= $p['hero'] === '' ? ' empty' : '' ?>">
+        <?php if ($p['hero'] !== ''): ?><img src="<?= e(url($p['hero'])) ?>" alt="<?= e($p['name']) ?>" fetchpriority="high"><?php endif; ?>
+        <?php if ($p['sticker'] !== ''): ?><div class="sticker"><?= e($p['sticker']) ?></div><?php endif; ?>
+      </div>
+      <?php if ($p['hero'] !== ''): ?><?= credit_html($p['hero_credit'], $p['hero_credit_url'], 'credit-tag') ?><?php endif; ?>
     </div>
   </div>
 </header>

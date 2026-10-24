@@ -36,6 +36,7 @@ return [
     'contact.err.expired' => 'The form expired. Please check your message and send it again.',
     'contact.err.spam' => 'The message contains too many links.',
     'contact.err.rate' => 'Too many messages in a short time. Please try again later.',
+    'credit.photo' => 'Photo:',
     'video.play' => 'Play video',
     'video.note' => 'Loads the video from YouTube when you press play',
     'video.watch' => 'Watch on YouTube',

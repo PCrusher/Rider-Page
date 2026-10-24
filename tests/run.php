@@ -274,6 +274,32 @@ try {
     Mailer::$transport = null;
     Db::run('DELETE FROM messages');
 
+    echo "Photo credits\n";
+    check(credit_html('') === '', 'no name and no link gives no credit');
+    check(str_contains(credit_html('Jane <b>Doe</b>'), 'Jane &lt;b&gt;Doe&lt;/b&gt;') && !str_contains(credit_html('Jane <b>Doe</b>'), '<a '), 'credit name is escaped and not linked without a link');
+    check(str_contains(credit_html('Jane', 'https://example.com/jane'), 'href="https://example.com/jane"'), 'credit links to the photographer');
+    check(!str_contains(credit_html('Jane', 'javascript:alert(1)'), 'href'), 'unsafe credit link is dropped');
+    check(str_contains(credit_html('', 'https://www.example.com/x'), '>example.com</a>'), 'link without a name uses the domain');
+    $md = Markdown::render('![A great climb](/uploads/a.jpg "Jane Doe | https://example.com/jane")');
+    check(str_contains($md, '<figcaption>A great climb') && str_contains($md, 'Jane Doe') && str_contains($md, 'href="https://example.com/jane"'), 'markdown image title becomes a photo credit');
+    check(str_contains(Markdown::render('![](/uploads/a.jpg "Only Name")'), '<figcaption>'), 'credit alone makes a caption');
+    check(!str_contains(Markdown::render('![x](/uploads/a.jpg "Evil | javascript:alert(1)")'), 'javascript:'), 'unsafe link in a markdown credit is dropped');
+    check(!str_contains(Markdown::render('![x](/uploads/a.jpg)'), 'Photo:'), 'no credit when none is given');
+
+    Db::insert('media', ['image' => 'uploads/credit-test.jpg', 'caption' => 'Test', 'pos' => 99, 'credit' => 'Sam Shot', 'credit_url' => 'https://example.org/sam']);
+    Settings::set('hero_image', 'uploads/hero-test.jpg');
+    Settings::set('hero_credit', 'Hero Photographer');
+    Db::run("UPDATE posts SET cover = 'uploads/cover-test.jpg', cover_credit = 'Cover Person', cover_credit_url = 'https://example.org/cover' WHERE slug = 'welcome'");
+    $home = Site::response('/')['body'];
+    check(str_contains($home, 'Sam Shot') && str_contains($home, 'href="https://example.org/sam"'), 'gallery photo shows its credit with link');
+    check(str_contains($home, 'Hero Photographer'), 'main photo shows its credit');
+    check(str_contains(Site::response('/blog/welcome')['body'], 'Cover Person'), 'blog cover shows its credit');
+    Settings::set('hero_credit', '');
+    check(!str_contains(Site::response('/')['body'], 'Hero Photographer'), 'no credit when the field is empty');
+    Db::run("DELETE FROM media WHERE image = 'uploads/credit-test.jpg'");
+    Settings::set('hero_image', '');
+    Db::run("UPDATE posts SET cover = '', cover_credit = '', cover_credit_url = '' WHERE slug = 'welcome'");
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

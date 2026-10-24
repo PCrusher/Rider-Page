@@ -7,7 +7,10 @@
     <span class="date"><?= e(t('blog.minutes', ['n' => $post['minutes']])) ?></span>
   </div>
   <?php if ($post['cover'] !== ''): ?>
-    <div class="ph cover"><img src="<?= e(url($post['cover'])) ?>" alt=""></div>
+    <div class="post-cover">
+      <div class="ph cover"><img src="<?= e(url($post['cover'])) ?>" alt=""></div>
+      <?= credit_html((string)($post['cover_credit'] ?? ''), (string)($post['cover_credit_url'] ?? ''), 'credit-tag') ?>
+    </div>
   <?php endif; ?>
   <div class="prose"><?= $post['html'] ?></div>
 </article>

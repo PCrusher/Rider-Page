@@ -13,9 +13,12 @@
     <?php if ($gallery): ?>
       <div class="gallery">
         <?php foreach ($gallery as $g): ?>
-          <a class="ph" href="<?= e(url($g['image'])) ?>" target="_blank" rel="noopener">
-            <img src="<?= e(url(Images::thumb($g['image']))) ?>" alt="<?= e($g['caption'] !== '' ? $g['caption'] : $p['name']) ?>" loading="lazy">
-          </a>
+          <figure class="gal">
+            <a class="ph" href="<?= e(url($g['image'])) ?>" target="_blank" rel="noopener">
+              <img src="<?= e(url(Images::thumb($g['image']))) ?>" alt="<?= e($g['caption'] !== '' ? $g['caption'] : $p['name']) ?>" loading="lazy">
+            </a>
+            <?= credit_html((string)($g['credit'] ?? ''), (string)($g['credit_url'] ?? ''), 'credit-tag') ?>
+          </figure>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

@@ -17,6 +17,18 @@
     <div class="preview"><img src="<?= e(url(Images::thumb((string)$row['cover']))) ?>" alt=""><label class="check"><input type="checkbox" name="remove_cover" value="1"> Remove this image</label></div>
   <?php endif; ?>
   <input type="file" id="cover" name="cover" accept="image/jpeg,image/png,image/webp,image/gif">
+  <div class="row2">
+    <div>
+      <label class="f" for="cover_credit">Photographer</label>
+      <input type="text" id="cover_credit" name="cover_credit" value="<?= e((string)($row['cover_credit'] ?? '')) ?>" maxlength="190">
+      <p class="hint">Optional photo credit, shown on the cover image.</p>
+    </div>
+    <div>
+      <label class="f" for="cover_credit_url">Photographer link</label>
+      <input type="url" id="cover_credit_url" name="cover_credit_url" value="<?= e((string)($row['cover_credit_url'] ?? '')) ?>" placeholder="https://">
+      <p class="hint">Optional link to their website or profile.</p>
+    </div>
+  </div>
 
   <label class="f" for="body">Text</label>
   <div class="toolbar">
@@ -30,7 +42,7 @@
     <span class="status" aria-live="polite"></span>
   </div>
   <textarea id="body" name="body" class="editor"><?= e((string)$row['body']) ?></textarea>
-  <p class="hint">Write plain text. Put a YouTube link on a line of its own to show a video. Use the buttons above or Markdown: <code>**bold**</code>, <code>*italic*</code>, <code>[text](https://…)</code>, <code>## Heading</code>.</p>
+  <p class="hint">Write plain text. Put a YouTube link on a line of its own to show a video. A photo credit can be added when you insert an image (shown under the picture). Use the buttons above or Markdown: <code>**bold**</code>, <code>*italic*</code>, <code>[text](https://…)</code>, <code>## Heading</code>.</p>
 
   <div class="row2">
     <div>

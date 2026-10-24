@@ -299,6 +299,8 @@ final class Site
             'email' => trim($g('email')),
             'video_id' => youtube_id($g('video_url')),
             'video_caption' => $g('video_caption'),
+            'hero_credit' => $g('hero_credit'),
+            'hero_credit_url' => $g('hero_credit_url'),
             'contact_title' => $g('contact_title') ?: t('contact.title'),
             'contact_text' => $g('contact_text') ?: t('contact.text'),
         ];

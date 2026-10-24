@@ -3,6 +3,12 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.6.0
+
+- Photo credits: an optional photographer name and link for the main photo (*Profile*), each gallery photo (*Photos*), blog cover images (*Blog*) and pictures inside a post. Shown as "Photo: Name" on the picture, with the name linked when a link is given. Nothing is shown when the fields are empty.
+- In the blog editor, the *Image...* button asks for an optional credit after the upload. In Markdown: `![Caption](/uploads/x.jpg "Name | https://link")`.
+- Adds columns to `media` and `posts`. Existing content is not touched.
+
 ## 0.5.1
 
 - Fix: the design cards on *Admin -> Appearance* were drawn broken (torn borders, stray white blocks). Styling only.

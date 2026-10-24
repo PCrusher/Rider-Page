@@ -36,6 +36,7 @@ return [
     'contact.err.expired' => 'Das Formular ist abgelaufen. Bitte prüfe deine Nachricht und sende sie erneut.',
     'contact.err.spam' => 'Die Nachricht enthält zu viele Links.',
     'contact.err.rate' => 'Zu viele Nachrichten in kurzer Zeit. Bitte versuche es später erneut.',
+    'credit.photo' => 'Foto:',
     'video.play' => 'Video abspielen',
     'video.note' => 'Das Video wird erst beim Abspielen von YouTube geladen',
     'video.watch' => 'Auf YouTube ansehen',

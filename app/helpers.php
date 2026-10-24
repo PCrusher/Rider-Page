@@ -246,6 +246,21 @@ function social_types(): array
     ];
 }
 
+/** "Photo: Name" with the name linked when a safe link is given. Empty when there is nothing to credit. */
+function credit_html(string $name, string $url = '', string $class = 'credit'): string
+{
+    $name = trim($name);
+    $url = safe_url($url);
+    if ($name === '' && $url !== '') {
+        $name = (string)preg_replace('/^www\./i', '', (string)parse_url($url, PHP_URL_HOST));
+    }
+    if ($name === '') {
+        return '';
+    }
+    $label = $url !== '' ? '<a href="' . e($url) . '" target="_blank" rel="noopener">' . e($name) . '</a>' : e($name);
+    return '<span class="' . e($class) . '">' . e(t('credit.photo')) . ' ' . $label . '</span>';
+}
+
 function format_date(?string $date): string
 {
     $ts = $date ? strtotime($date) : false;

@@ -87,11 +87,18 @@ final class Markdown
                 $i++;
                 continue;
             }
-            if (preg_match('/^!\[([^\]]*)\]\(([^)\s]+)\)$/', $trim, $m) && ($src = self::imageUrl($m[2])) !== '') {
+            if (preg_match('/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)$/', $trim, $m) && ($src = self::imageUrl($m[2])) !== '') {
                 $flush();
                 $alt = e($m[1]);
+                // An optional title holds the photo credit: "Name" or "Name | https://link"
+                $credit = '';
+                if (!empty($m[3])) {
+                    $parts = explode('|', $m[3], 2);
+                    $credit = credit_html($parts[0], $parts[1] ?? '');
+                }
+                $cap = $alt . ($alt !== '' && $credit !== '' ? ' &middot; ' : '') . $credit;
                 $html[] = '<figure><img src="' . e($src) . '" alt="' . $alt . '" loading="lazy">'
-                    . ($m[1] !== '' ? '<figcaption>' . $alt . '</figcaption>' : '') . '</figure>';
+                    . ($cap !== '' ? '<figcaption>' . $cap . '</figcaption>' : '') . '</figure>';
                 $i++;
                 continue;
             }

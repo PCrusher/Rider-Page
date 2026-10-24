@@ -16,6 +16,8 @@ final class Admin
             ['tagline', 'Tagline', 'text', 'hint' => 'For example: Gravel · XC marathon · Gothenburg'],
             ['bio', 'Short introduction', 'textarea', 'rows' => 4],
             ['hero_image', 'Main photo', 'image', 'hint' => 'A portrait or action photo. JPG, PNG or WebP.'],
+            ['hero_credit', 'Main photo: photographer', 'text', 'hint' => 'Optional photo credit, shown on the photo. Leave empty for none.'],
+            ['hero_credit_url', 'Main photo: photographer link', 'url', 'hint' => 'Optional link to their website or profile.'],
             ['sticker', 'Badge on the photo', 'text', 'hint' => 'Optional, for example "3rd Swedish Championships".'],
             ['email', 'Contact email', 'email', 'hint' => 'Shown in the contact section. Leave empty to hide that section.'],
             ['contact_title', 'Contact heading', 'text', 'hint' => 'Leave empty for the default text.'],
@@ -59,11 +61,13 @@ final class Admin
                 ],
             ],
             'media' => [
-                'title' => 'Photos', 'one' => 'photo', 'list' => ['image', 'caption'],
+                'title' => 'Photos', 'one' => 'photo', 'list' => ['image', 'caption', 'credit'],
                 'help' => 'The gallery in the media section.',
                 'fields' => [
                     ['image', 'Photo', 'image', 'required' => true],
                     ['caption', 'Caption', 'text', 'hint' => 'Used as the image description for screen readers and search engines.'],
+                    ['credit', 'Photographer', 'text', 'hint' => 'Optional photo credit, shown on the photo.'],
+                    ['credit_url', 'Photographer link', 'url', 'hint' => 'Optional link to their website or profile.'],
                 ],
             ],
             'faqs' => [
@@ -471,7 +475,7 @@ final class Admin
                 flash('You can not edit this post.', 'error');
                 redirect('/admin/posts');
             }
-            $row ??= ['title' => '', 'slug' => '', 'summary' => '', 'cover' => '', 'body' => '', 'status' => 'draft', 'published_at' => now(), 'author_id' => (int)$u['id']];
+            $row ??= ['title' => '', 'slug' => '', 'summary' => '', 'cover' => '', 'cover_credit' => '', 'cover_credit_url' => '', 'body' => '', 'status' => 'draft', 'published_at' => now(), 'author_id' => (int)$u['id']];
             self::postForm($row, $id, []);
             return;
         }
@@ -512,6 +516,12 @@ final class Admin
             [$img, $imgErrors, $remove] = self::collect([['cover', 'Cover image', 'image']], $old);
             $errors = array_merge($errors, $imgErrors);
             $data['cover'] = $img['cover'];
+            $data['cover_credit'] = mb_substr(trim((string)($_POST['cover_credit'] ?? '')), 0, 190);
+            $creditUrl = trim((string)($_POST['cover_credit_url'] ?? ''));
+            $data['cover_credit_url'] = safe_url($creditUrl);
+            if ($creditUrl !== '' && $data['cover_credit_url'] === '') {
+                $errors[] = 'The photographer link must be a full web address starting with https://';
+            }
             if ($errors) {
                 self::cleanupNew([['cover', 'Cover image', 'image']], $img, $old);
                 self::postForm($data + ['cover' => $old['cover'], 'author_id' => $old['author_id']], $id, $errors);

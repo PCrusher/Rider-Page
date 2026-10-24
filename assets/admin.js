@@ -68,7 +68,12 @@
       fetch(form.getAttribute('data-upload'), { method: 'POST', body: fd, credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (j) {
-          if (j.ok) { insertLine('![Describe the image](' + j.url + ')'); status.textContent = 'Image added'; }
+          if (j.ok) {
+            var credit = window.prompt('Photo credit (optional). Write the name, or Name | https://link', '');
+            credit = credit ? credit.replace(/"/g, '').trim() : '';
+            insertLine('![Describe the image](' + j.url + (credit ? ' "' + credit + '"' : '') + ')');
+            status.textContent = 'Image added';
+          }
           else { status.textContent = j.error || 'Upload failed'; }
         })
         .catch(function () { status.textContent = 'Upload failed'; })

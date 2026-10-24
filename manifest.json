@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "Fix: the design cards on the Appearance page were drawn broken. Styling only.",
+  "changelog": "New: optional photo credits (photographer name and link) for the main photo, gallery photos, blog covers and pictures inside posts. Adds columns to the media and posts tables.",
   "warnings": []
 }
