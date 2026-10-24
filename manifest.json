@@ -1,0 +1,9 @@
+{
+  "name": "Rider Page",
+  "version": "0.1.0",
+  "repo": "PCrusher/Rider-Page",
+  "min_php": "8.1",
+  "breaking": false,
+  "changelog": "First release.",
+  "warnings": []
+}

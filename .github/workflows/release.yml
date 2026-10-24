@@ -1,0 +1,45 @@
+name: Release
+
+# Push a tag like v0.2.0 to publish a release. The version in manifest.json must match the tag.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: gd, zip, pdo_sqlite, mbstring, curl
+      - name: Check version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          FILE=$(php -r 'echo json_decode(file_get_contents("manifest.json"), true)["version"];')
+          if [ "$TAG" != "$FILE" ]; then
+            echo "Tag $TAG does not match manifest.json version $FILE"; exit 1
+          fi
+          echo "VERSION=$TAG" >> "$GITHUB_ENV"
+      - name: Test
+        run: |
+          find . -name '*.php' -not -path './docs/*' -print0 | xargs -0 -n1 php -l > /dev/null
+          php tests/run.php
+      - name: Build package
+        run: |
+          zip -r -X "rider-page-$VERSION.zip" \
+            app themes assets index.php manifest.json .htaccess README.md LICENSE CHANGELOG.md \
+            storage/.htaccess storage/.gitkeep uploads/.htaccess uploads/.gitkeep \
+            -x '*.DS_Store'
+          sha256sum "rider-page-$VERSION.zip" > "rider-page-$VERSION.zip.sha256"
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "rider-page-$VERSION.zip" "rider-page-$VERSION.zip.sha256" manifest.json \
+            --title "Rider Page $VERSION" --generate-notes

@@ -1,0 +1,10 @@
+.DS_Store
+*.zip
+
+# Everything the site creates while running
+/storage/*
+!/storage/.htaccess
+!/storage/.gitkeep
+/uploads/*
+!/uploads/.htaccess
+!/uploads/.gitkeep
