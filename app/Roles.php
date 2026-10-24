@@ -20,6 +20,7 @@ final class Roles
         '' => self::EVERYONE,
         'account' => self::EVERYONE,
         'posts' => self::EVERYONE,
+        'qr' => self::EVERYONE,
         'upload' => self::EVERYONE,
         'profile' => self::STAFF,
         'socials' => self::STAFF,

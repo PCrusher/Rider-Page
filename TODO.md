@@ -32,7 +32,8 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] Custom CSS box for people who want small tweaks without touching code
 - [ ] Support a user theme folder in `storage/` that overrides templates and survives updates
 - [ ] Import and export: all content as one file (move to another host, or backup)
-- [ ] Two-factor login for the admin
+- [ ] Two-factor login for the admin (an authenticator app code or passkeys)
+- [ ] Account: approximate location for logins (needs an offline IP database), notification email on a login from a new device
 - [ ] Invite users by email with a link to set their own password (needs mail sending)
 - [ ] Users: password reset by email, "last login" column, activity log
 - [ ] Per-author profile and byline on blog posts
@@ -87,3 +88,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.6.0: optional photo credits (name and link) for photos
 - 0.7.0: editable section headings, small labels and partner level names, each switchable
 - 0.8.0: Pages with footer links and guided legal pages (impressum, privacy, sponsorship notice)
+- 0.9.0: QR login with a phone, list of logged-in devices with log out

@@ -382,6 +382,70 @@ try {
     Db::run('DELETE FROM pages');
     Settings::setMany(['legal_f_contact_form' => '', 'legal_f_youtube' => '']);
 
+    echo "Sessions and QR login\n";
+    check(Auth::device('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1') === 'Safari on iPhone', 'device label: Safari on iPhone');
+    check(Auth::device('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36 Edg/120.0') === 'Edge on Windows', 'device label: Edge on Windows');
+    check(Auth::device('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36') === 'Chrome on Mac', 'device label: Chrome on Mac');
+    check(Auth::device('') === 'Unknown device', 'device label for an empty user agent');
+
+    foreach (['Safari', 'Firefox', 'Chrome'] as $i => $b) {
+        Db::insert('login_sessions', ['user_id' => $uid, 'token_hash' => hash('sha256', 'tok' . $i), 'ip' => '198.51.100.' . $i, 'ua' => $b . '/1 Linux', 'method' => $i === 1 ? 'qr' : 'password', 'created_at' => now(), 'last_seen' => now()]);
+    }
+    $list = Auth::sessionsFor($uid);
+    check(count($list) === 3 && $list[0]['device'] !== '' && $list[0]['current'] === false, 'logged-in devices are listed with a device label');
+    Auth::revoke($uid, (int)$list[0]['id']);
+    check(count(Auth::sessionsFor($uid)) === 2, 'one device can be logged out');
+    Auth::revoke($uid + 99, (int)$list[1]['id']);
+    check(count(Auth::sessionsFor($uid)) === 2, 'a session can only be ended by its own user');
+    Auth::revokeOthers($uid);
+    check(count(Auth::sessionsFor($uid)) === 0, 'all other devices can be logged out');
+
+    $_SERVER['REMOTE_ADDR'] = '203.0.113.50';
+    $q = QrLogin::create();
+    check(is_array($q) && strlen($q['token']) === 64 && strlen($q['poll']) === 64 && preg_match('/^\d{4}$/', $q['code']) === 1 && $q['token'] !== $q['poll'], 'QR request has a token, a separate poll secret and a 4-digit number');
+    check(str_contains($q['url'], '/admin/qr/approve?t=' . $q['token']), 'QR address points to the approval page');
+    check(QrLogin::state($q['poll'])['state'] === 'pending' && QrLogin::state($q['poll'])['left'] <= 20, 'a new code is pending for at most 20 seconds');
+    check(QrLogin::state($q['token'])['state'] === 'expired', 'the QR token can not be used to poll');
+    check(QrLogin::claim($q['poll']) === null, 'nothing can be claimed before approval');
+    check(str_contains((string)QrLogin::approve($q['token'], $uid, $q['code']), 'switched off'), 'QR login is off for a user by default');
+    Db::run('UPDATE users SET qr_enabled = 1 WHERE id = ?', [$uid]);
+    check(QrLogin::approve($q['token'], $uid, $q['code'] === '0000' ? '1111' : '0000') !== null, 'a wrong number is refused');
+    check(QrLogin::approve($q['token'], $uid, $q['code']) === null, 'the right number approves');
+    check(QrLogin::state($q['poll'])['state'] === 'approved', 'the computer sees the approval');
+    check(QrLogin::claim(str_repeat('a', 64)) === null, 'a wrong poll secret claims nothing');
+    check(QrLogin::claim($q['poll']) === $uid, 'the computer picks up the login');
+    check(QrLogin::claim($q['poll']) === null && QrLogin::state($q['poll'])['state'] === 'used', 'an approved login can be used only once');
+
+    $q = QrLogin::create();
+    Db::run('UPDATE qr_logins SET created = ? WHERE poll_hash = ?', [time() - 30, hash('sha256', $q['poll'])]);
+    check(QrLogin::state($q['poll'])['state'] === 'expired', 'a code older than 20 seconds has expired');
+    check(QrLogin::scan($q['token']) === null && str_contains((string)QrLogin::approve($q['token'], $uid, $q['code']), 'no longer valid'), 'an expired code can not be scanned or approved');
+
+    $q = QrLogin::create();
+    check(QrLogin::scan($q['token']) !== null && QrLogin::state($q['poll'])['state'] === 'scanned', 'scanning in time moves the request to the confirm step');
+    Db::run('UPDATE qr_logins SET created = ? WHERE poll_hash = ?', [time() - 60, hash('sha256', $q['poll'])]);
+    check(QrLogin::approve($q['token'], $uid, $q['code']) === null, 'after scanning, the phone has extra time to type the number');
+    QrLogin::claim($q['poll']);
+
+    $q = QrLogin::create();
+    $wrong = $q['code'] === '0000' ? '1111' : '0000';
+    QrLogin::approve($q['token'], $uid, $wrong);
+    QrLogin::approve($q['token'], $uid, $wrong);
+    check(str_contains((string)QrLogin::approve($q['token'], $uid, $wrong), 'cancelled') && QrLogin::state($q['poll'])['state'] === 'failed', 'three wrong numbers cancel the request');
+    check(QrLogin::approve($q['token'], $uid, $q['code']) !== null, 'a cancelled request can not be approved any more');
+
+    $q = QrLogin::create();
+    QrLogin::deny($q['token']);
+    check(QrLogin::state($q['poll'])['state'] === 'denied', 'a denied request is reported to the computer');
+
+    $limited = false;
+    for ($i = 0; $i < 30 && !$limited; $i++) {
+        $limited = QrLogin::create() === null;
+    }
+    check($limited, 'too many codes from one address are refused');
+    Db::run('DELETE FROM qr_logins');
+    Db::run('UPDATE users SET qr_enabled = 0');
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

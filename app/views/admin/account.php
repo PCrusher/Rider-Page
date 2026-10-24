@@ -1,4 +1,4 @@
-<?php /** Variables: $errors $email $name $must $role */ ?>
+<?php /** Variables: $errors $email $name $must $role $qr $qrAvailable $sessions */ ?>
 <h1>Account</h1>
 <p class="muted">Your login details. Your level: <b><?= e($role) ?></b>.</p>
 <?php if ($must): ?><div class="box warn">An admin set a first password for you. Please choose your own now. You can use the rest of the admin area afterwards.</div><?php endif; ?>
@@ -18,3 +18,49 @@
   <p class="hint"><?= $must ? 'The first password you were given.' : 'Needed to confirm any change.' ?></p>
   <div class="actions"><button class="btn primary" type="submit">Save</button></div>
 </form>
+
+<?php if (!$must): ?>
+<h2>Login with a QR code</h2>
+<form method="post" action="<?= e(url('/admin/account')) ?>" class="box">
+  <?= csrf_field() ?>
+  <input type="hidden" name="do" value="qr">
+  <?php if (!$qrAvailable): ?>
+    <p class="muted" style="margin-top:0">QR login is not available on this installation (the file <code>assets/qrcode.js</code> is missing).</p>
+  <?php else: ?>
+    <p class="muted" style="margin-top:0">Log in on a computer without typing a password: the login page shows a QR code, you scan it with this phone, type the 4-digit number from the computer's screen, and the computer is logged in. The code is valid for 20 seconds and has to be refreshed by hand.</p>
+    <label class="check"><input type="checkbox" name="qr_enabled" value="1"<?= $qr ? ' checked' : '' ?>> Allow logging in by QR code</label>
+    <label class="f" for="qr_current">Your password</label>
+    <input type="password" id="qr_current" name="current" autocomplete="current-password" required>
+    <p class="hint">The phone must be logged in to the admin area in its own browser. Anyone who can unlock that phone while it is logged in can approve a login, so only switch this on if your phone is protected with a code or fingerprint.</p>
+    <div class="actions"><button class="btn primary" type="submit">Save</button></div>
+  <?php endif; ?>
+</form>
+
+<h2>Where you are logged in</h2>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Device</th><th>IP address</th><th>Logged in with</th><th>Since</th><th>Last active</th><th></th></tr></thead>
+  <tbody>
+  <?php foreach ($sessions as $s): ?>
+    <tr>
+      <td><b><?= e($s['device']) ?></b><?= $s['current'] ? ' <span class="pill ok">This device</span>' : '' ?></td>
+      <td class="muted small"><?= e($s['ip']) ?></td>
+      <td class="muted small"><?= $s['method'] === 'qr' ? 'QR code' : 'Password' ?></td>
+      <td class="muted small"><?= e(substr((string)$s['created_at'], 0, 16)) ?></td>
+      <td class="muted small"><?= e(substr((string)$s['last_seen'], 0, 16)) ?></td>
+      <td class="act">
+        <?php if (!$s['current']): ?>
+          <form method="post" action="<?= e(url('/admin/account')) ?>" data-confirm="Log out this device?"><?= csrf_field() ?><input type="hidden" name="do" value="logout"><input type="hidden" name="id" value="<?= (int)$s['id'] ?>"><button class="btn sm danger" type="submit">Log out</button></form>
+        <?php endif; ?>
+      </td>
+    </tr>
+  <?php endforeach; ?>
+  <?php if (!$sessions): ?><tr><td colspan="6" class="muted">No device information yet. It appears the next time you log in.</td></tr><?php endif; ?>
+  </tbody>
+</table>
+</div>
+<?php if (count($sessions) > 1): ?>
+  <form method="post" action="<?= e(url('/admin/account')) ?>" data-confirm="Log out all other devices?" style="margin-top:12px"><?= csrf_field() ?><input type="hidden" name="do" value="logout_others"><button class="btn" type="submit">Log out all other devices</button></form>
+<?php endif; ?>
+<p class="hint">IP address and browser are saved only for this list, are visible only to you, and are deleted when you log out or after 30 days without use. A place name would need an external lookup service, so only the IP address is shown.</p>
+<?php endif; ?>

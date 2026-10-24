@@ -3,6 +3,13 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.9.0
+
+- **Login with a QR code**: the login page can show a QR code. You scan it with a phone that is already logged in, type the 4-digit number shown on the computer's screen, and the computer is logged in without a password. The code is valid for 20 seconds and is refreshed by hand. It is off by default and each user switches it on under *Account* (after entering their password).
+- Safety: single-use codes, a separate secret that stays on the computer's page, the number check (so a QR code shown by someone else can not be used to trick you), three tries, and the phone shows which device and IP address is asking.
+- **Where you are logged in** (*Account*): every logged-in browser with device, IP address, login method, start and last activity. End any of them, or all other devices. A new password logs out the other devices; removing a user ends their logins.
+- Adds the tables `login_sessions` and `qr_logins` and the column `users.qr_enabled`. Existing logins are adopted and stay valid.
+
 ## 0.8.0
 
 - **Pages** (*Admin -> Pages*): your own pages with a title, an address, simple text formatting and draft or published status. Published pages can be linked in the footer of every page.

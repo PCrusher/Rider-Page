@@ -5,12 +5,23 @@ final class Auth
 {
     private const MAX_FAILS = 8;
     private const WINDOW = 900;
+    /** A login that was not used for this many days ends by itself. */
+    private const IDLE_DAYS = 30;
 
     public static function user(): ?array
     {
         rp_session();
         $id = $_SESSION['uid'] ?? null;
         if (!$id) {
+            return null;
+        }
+        static $valid = [];
+        if (!isset($valid[$id])) {
+            $valid[$id] = self::sessionStillValid((int)$id);
+        }
+        if (!$valid[$id]) {
+            // Ended from another device, or idle for too long.
+            unset($_SESSION['uid'], $_SESSION['sid']);
             return null;
         }
         static $cache = [];
@@ -22,6 +33,7 @@ final class Auth
                 $u['role'] = Roles::valid((string)($u['role'] ?? '')) ? $u['role'] : 'admin';
                 $u['name'] = (string)($u['name'] ?? '');
                 $u['must_change'] = (int)($u['must_change'] ?? 0);
+                $u['qr_enabled'] = (int)($u['qr_enabled'] ?? 0);
                 unset($u['password_hash']);
             }
             $cache[$id] = $u;
@@ -61,16 +73,23 @@ final class Auth
         return true;
     }
 
-    public static function login(int $id): void
+    public static function login(int $id, string $method = 'password'): void
     {
         rp_session();
         session_regenerate_id(true);
         $_SESSION['uid'] = $id;
+        self::record($id, $method);
     }
 
     public static function logout(): void
     {
         rp_session();
+        if (!empty($_SESSION['sid'])) {
+            try {
+                Db::delete('login_sessions', 'token_hash = ?', [hash('sha256', (string)$_SESSION['sid'])]);
+            } catch (Throwable) {
+            }
+        }
         $_SESSION = [];
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
@@ -84,5 +103,119 @@ final class Auth
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
             'created_at' => now(),
         ]);
+    }
+
+    /* ---------- where am I logged in ---------- */
+
+    /** Remember this browser as a signed-in device. Never blocks a login if the table is missing. */
+    private static function record(int $uid, string $method): void
+    {
+        try {
+            $token = bin2hex(random_bytes(24));
+            Db::delete('login_sessions', 'last_seen < ?', [date('Y-m-d H:i:s', time() - self::IDLE_DAYS * 86400)]);
+            Db::insert('login_sessions', [
+                'user_id' => $uid, 'token_hash' => hash('sha256', $token), 'ip' => client_ip(),
+                'ua' => mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+                'method' => $method, 'created_at' => now(), 'last_seen' => now(),
+            ]);
+            $_SESSION['sid'] = $token;
+        } catch (Throwable) {
+            unset($_SESSION['sid']);
+        }
+    }
+
+    /**
+     * False when this login was ended from another device or has been idle too long.
+     * A login that started before this feature existed is adopted. If the table is missing
+     * (right after an update, before the database change ran) the login simply stays valid.
+     */
+    private static function sessionStillValid(int $uid): bool
+    {
+        try {
+            $token = (string)($_SESSION['sid'] ?? '');
+            if ($token === '') {
+                self::record($uid, 'password');
+                return true;
+            }
+            $row = Db::row('SELECT id, user_id, last_seen FROM login_sessions WHERE token_hash = ?', [hash('sha256', $token)]);
+            if (!$row || (int)$row['user_id'] !== $uid) {
+                return false;
+            }
+            $seen = (int)strtotime((string)$row['last_seen']);
+            if ($seen < time() - self::IDLE_DAYS * 86400) {
+                Db::delete('login_sessions', 'id = ?', [(int)$row['id']]);
+                return false;
+            }
+            if ($seen < time() - 60) {
+                Db::update('login_sessions', [
+                    'last_seen' => now(), 'ip' => client_ip(),
+                    'ua' => mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+                ], 'id = ?', [(int)$row['id']]);
+            }
+            return true;
+        } catch (Throwable) {
+            return true;
+        }
+    }
+
+    /** @return array<int,array> the user's logged-in devices, newest activity first; 'current' marks this browser */
+    public static function sessionsFor(int $uid): array
+    {
+        $mine = !empty($_SESSION['sid']) ? hash('sha256', (string)$_SESSION['sid']) : '';
+        $rows = Db::rows('SELECT * FROM login_sessions WHERE user_id = ? ORDER BY last_seen DESC, id DESC', [$uid]);
+        foreach ($rows as &$r) {
+            $r['current'] = $mine !== '' && hash_equals((string)$r['token_hash'], $mine);
+            $r['device'] = self::device((string)$r['ua']);
+        }
+        unset($r);
+        return $rows;
+    }
+
+    public static function revoke(int $uid, int $sessionId): void
+    {
+        Db::delete('login_sessions', 'id = ? AND user_id = ?', [$sessionId, $uid]);
+    }
+
+    /** End every login of the user except the one in this browser. */
+    public static function revokeOthers(int $uid): void
+    {
+        $mine = !empty($_SESSION['sid']) ? hash('sha256', (string)$_SESSION['sid']) : '';
+        Db::delete('login_sessions', 'user_id = ? AND token_hash <> ?', [$uid, $mine]);
+    }
+
+    /** End all logins of a user (used when an admin changes or removes that user). */
+    public static function revokeAll(int $uid): void
+    {
+        try {
+            Db::delete('login_sessions', 'user_id = ?', [$uid]);
+        } catch (Throwable) {
+        }
+    }
+
+    /** "Safari on iPhone" from a browser's user-agent text. */
+    public static function device(string $ua): string
+    {
+        $os = match (true) {
+            str_contains($ua, 'iPhone') => 'iPhone',
+            str_contains($ua, 'iPad') => 'iPad',
+            str_contains($ua, 'Android') => 'Android',
+            str_contains($ua, 'Windows') => 'Windows',
+            str_contains($ua, 'Macintosh'), str_contains($ua, 'Mac OS X') => 'Mac',
+            str_contains($ua, 'CrOS') => 'Chromebook',
+            str_contains($ua, 'Linux') => 'Linux',
+            default => '',
+        };
+        $browser = match (true) {
+            str_contains($ua, 'Edg/'), str_contains($ua, 'EdgA/'), str_contains($ua, 'EdgiOS/') => 'Edge',
+            str_contains($ua, 'OPR/'), str_contains($ua, 'Opera') => 'Opera',
+            str_contains($ua, 'Firefox/'), str_contains($ua, 'FxiOS/') => 'Firefox',
+            str_contains($ua, 'Chrome/'), str_contains($ua, 'CriOS/') => 'Chrome',
+            str_contains($ua, 'Safari/') => 'Safari',
+            default => '',
+        };
+        if ($browser === '' && $os === '') {
+            return 'Unknown device';
+        }
+        return ($browser !== '' ? $browser : 'Browser') . ($os !== '' ? ' on ' . $os : '');
     }
 }

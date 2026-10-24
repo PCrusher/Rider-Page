@@ -115,3 +115,13 @@ td img.thumb { height: 36px; width: auto; max-width: 90px; object-fit: cover; bo
   .side .foot { margin: 0; padding: 0; border: 0; }
   .row2 { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* QR login */
+.qr { margin-top: 22px; }
+.qr-or { text-align: center; color: var(--muted); font-size: .85rem; margin-bottom: 12px; position: relative; }
+.qr-or span { background: var(--bg); padding: 0 10px; position: relative; }
+.qr-or::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); }
+.qr-img svg { width: 220px; height: 220px; display: block; background: #fff; padding: 8px; border-radius: 10px; margin: 14px 0 6px; }
+.qr-code b { font: 700 1.8rem/1 ui-monospace, Menlo, monospace; letter-spacing: .25em; margin-left: 6px; }
+.code-input { font: 700 1.6rem/1 ui-monospace, Menlo, monospace; letter-spacing: .4em; text-align: center; max-width: 12ch; }
+.dev { display: flex; flex-direction: column; gap: 2px; }

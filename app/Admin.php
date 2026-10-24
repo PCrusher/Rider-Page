@@ -98,6 +98,15 @@ final class Admin
             Auth::logout();
             redirect('/admin/login');
         }
+        if (in_array($path, ['/admin/qr/new', '/admin/qr/status', '/admin/qr/claim'], true)) {
+            self::qrPublic($path, $post);
+            return;
+        }
+        if ($path === '/admin/qr/approve' && Auth::user() === null) {
+            // A phone that is not logged in yet: log in first, then come back to this request.
+            $_SESSION['after_login'] = '/admin/qr/approve?t=' . preg_replace('/[^a-f0-9]/', '', (string)($_GET['t'] ?? ''));
+            flash('Log in on this phone with your password first. You will be taken back to the request.', 'error');
+        }
 
         self::$user = Auth::gate();
         if ($post) {
@@ -134,6 +143,8 @@ final class Admin
             self::appearance($post);
         } elseif ($sec === 'maintenance') {
             self::maintenance($post);
+        } elseif ($sec === 'qr') {
+            self::qrApprove($act, $post);
         } elseif ($sec === 'pages') {
             self::pages($act, $post);
         } elseif ($sec === 'legal') {
@@ -188,11 +199,72 @@ final class Admin
             $email = trim((string)($_POST['email'] ?? ''));
             $r = Auth::attempt($email, (string)($_POST['password'] ?? ''));
             if ($r === true) {
-                redirect('/admin');
+                $next = (string)($_SESSION['after_login'] ?? '');
+                unset($_SESSION['after_login']);
+                redirect(str_starts_with($next, '/admin/qr/approve') ? $next : '/admin');
             }
             $error = (string)$r;
         }
-        echo tpl('app/views/admin/login', ['error' => $error, 'email' => $email]);
+        echo tpl('app/views/admin/login', [
+            'error' => $error, 'email' => $email,
+            'qr' => is_file(RP_ROOT . '/assets/qrcode.js'),
+        ]);
+    }
+
+    /* ---------- login with a QR code ---------- */
+
+    /** Endpoints used by the login page of the computer. They need no login, only the poll secret. */
+    private static function qrPublic(string $path, bool $post): void
+    {
+        if ($path === '/admin/qr/status' && !$post) {
+            json_out(QrLogin::state((string)($_GET['p'] ?? '')));
+        }
+        if (!$post) {
+            json_out(['ok' => false], 405);
+        }
+        csrf_check();
+        if ($path === '/admin/qr/new') {
+            $r = QrLogin::create();
+            if ($r === null) {
+                json_out(['ok' => false, 'error' => 'Too many codes were requested. Please wait a few minutes.'], 429);
+            }
+            json_out(['ok' => true] + $r);
+        }
+        $uid = QrLogin::claim((string)($_POST['p'] ?? ''));
+        if ($uid === null) {
+            json_out(['ok' => false, 'error' => 'The login could not be completed. Show a new code.'], 400);
+        }
+        Auth::login($uid, 'qr');
+        json_out(['ok' => true, 'redirect' => url('/admin')]);
+    }
+
+    /** The phone: shows who is asking and asks for the number from the computer's screen. */
+    private static function qrApprove(string $act, bool $post): void
+    {
+        if ($act !== 'approve') {
+            redirect('/admin');
+        }
+        $token = (string)($post ? ($_POST['t'] ?? '') : ($_GET['t'] ?? ''));
+        $me = (int)self::$user['id'];
+        if ($post && !empty($_POST['deny'])) {
+            QrLogin::deny($token);
+            flash('The login request was denied.');
+            redirect('/admin');
+        }
+        $error = '';
+        if ($post) {
+            $err = QrLogin::approve($token, $me, (string)($_POST['code'] ?? ''));
+            if ($err === null) {
+                self::view('qr_done', [], 'Login approved');
+                return;
+            }
+            $error = $err;
+        }
+        $row = QrLogin::scan($token);
+        self::view('qr_approve', [
+            'token' => $token, 'error' => $error, 'info' => $row ? QrLogin::describe($row) : null,
+            'enabled' => (int)self::$user['qr_enabled'] === 1,
+        ], 'Approve login');
     }
 
     /* ---------- dashboard ---------- */
@@ -1141,8 +1213,30 @@ final class Admin
     {
         $errors = [];
         $must = (int)self::$user['must_change'] === 1;
+        $uid = (int)self::$user['id'];
+        if ($post && ($_POST['do'] ?? '') === 'qr') {
+            $u = Db::row('SELECT * FROM users WHERE id = ?', [$uid]);
+            if (!$u || !password_verify((string)($_POST['current'] ?? ''), (string)$u['password_hash'])) {
+                flash('The password is not correct.', 'error');
+            } else {
+                $on = !empty($_POST['qr_enabled']);
+                Db::update('users', ['qr_enabled' => $on ? 1 : 0], 'id = ?', [$uid]);
+                flash($on ? 'QR login is on for your account.' : 'QR login is off for your account.');
+            }
+            redirect('/admin/account');
+        }
+        if ($post && ($_POST['do'] ?? '') === 'logout') {
+            Auth::revoke($uid, (int)($_POST['id'] ?? 0));
+            flash('That device was logged out.');
+            redirect('/admin/account');
+        }
+        if ($post && ($_POST['do'] ?? '') === 'logout_others') {
+            Auth::revokeOthers($uid);
+            flash('All other devices were logged out.');
+            redirect('/admin/account');
+        }
         if ($post) {
-            $u = Db::row('SELECT * FROM users WHERE id = ?', [(int)self::$user['id']]);
+            $u = Db::row('SELECT * FROM users WHERE id = ?', [$uid]);
             $email = strtolower(trim((string)($_POST['email'] ?? '')));
             $name = mb_substr(trim((string)($_POST['name'] ?? '')), 0, 190);
             $current = (string)($_POST['current'] ?? '');
@@ -1169,7 +1263,10 @@ final class Admin
                     $data['must_change'] = 0;
                 }
                 Db::update('users', $data, 'id = ?', [(int)$u['id']]);
-                flash('Saved.');
+                if ($new !== '') {
+                    Auth::revokeOthers($uid);
+                }
+                flash($new !== '' ? 'Saved. Your other devices were logged out.' : 'Saved.');
                 redirect('/admin/account');
             }
         }
@@ -1179,6 +1276,9 @@ final class Admin
             'name' => $post ? ($_POST['name'] ?? '') : self::$user['name'],
             'must' => $must,
             'role' => Roles::ALL[self::$user['role']] ?? '',
+            'qr' => (int)self::$user['qr_enabled'] === 1,
+            'qrAvailable' => is_file(RP_ROOT . '/assets/qrcode.js'),
+            'sessions' => $must ? [] : Auth::sessionsFor($uid),
         ], 'Account');
     }
 }
