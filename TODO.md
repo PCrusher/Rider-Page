@@ -33,7 +33,11 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] Support a user theme folder in `storage/` that overrides templates and survives updates
 - [ ] Import and export: all content as one file (move to another host, or backup)
 - [ ] Two-factor login for the admin
-- [ ] More than one admin user
+- [ ] User levels: Admin (everything), Editor (content, blog, photos; no updates, maintenance, appearance or accounts), Author (own blog posts only, drafts need approval)
+- [ ] More than one user, invite by email, user list in the admin
+- [ ] Editable 404 page: own heading and text, optional list of latest posts, per language
+- [ ] Redirects: old address to new address (301), with a list in the admin and a "pages that were not found" log that suggests redirects
+- [ ] Optional: suggest the closest post or section on the 404 page
 
 ## Design
 
