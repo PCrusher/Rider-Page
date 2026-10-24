@@ -400,6 +400,7 @@ try {
     Auth::revokeOthers($uid);
     check(count(Auth::sessionsFor($uid)) === 0, 'all other devices can be logged out');
 
+    check(is_file($tmp . '/assets/qrcode.js') && str_contains((string)file_get_contents($tmp . '/assets/qrcode.js'), 'createSvgTag'), 'the QR code library is part of the package');
     $_SERVER['REMOTE_ADDR'] = '203.0.113.50';
     $q = QrLogin::create();
     check(is_array($q) && strlen($q['token']) === 64 && strlen($q['poll']) === 64 && preg_match('/^\d{4}$/', $q['code']) === 1 && $q['token'] !== $q['poll'], 'QR request has a token, a separate poll secret and a 4-digit number');

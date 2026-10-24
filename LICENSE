@@ -23,3 +23,6 @@ SOFTWARE.
 The fonts in assets/fonts are licensed under the SIL Open Font License 1.1
 (Archivo, Big Shoulders Display, DM Sans, Instrument Sans, JetBrains Mono,
 Newsreader, Unbounded). See https://openfontlicense.org
+
+assets/qrcode.js is qrcode-generator 1.4.4 by Kazuhiko Arase, MIT license
+(https://github.com/kazuhikoarase/qrcode-generator). The license text is at the top of that file.
