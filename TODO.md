@@ -16,7 +16,8 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 ## Features
 
 - [ ] Dark variants of the presets, optional automatic switch to the visitor's dark mode
-- [ ] Contact form (SMTP settings in the admin, honeypot against spam, no reliance on PHP `mail()`)
+- [ ] Contact form: optional privacy-policy link and consent checkbox, optional automatic reply to the visitor, optional captcha (privacy-friendly) for sites with heavy spam
+- [ ] Messages: search, export as CSV, mark as unread, email notification digests
 - [ ] Logo upload as SVG, cleaned of scripts on upload
 - [ ] Sponsor click counts (sponsors like numbers), shown in the admin
 - [ ] Media kit: downloadable PDF with results, audience numbers and sponsor packages
@@ -77,3 +78,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.2.0: maintenance mode in the admin
 - 0.3.0: editable 404 page, redirects, list of addresses that were not found
 - 0.4.0: user levels (admin, editor, author), Users page, post approval
+- 0.5.0: contact form with inbox and SMTP settings (email address no longer shown)

@@ -229,6 +229,51 @@ try {
     Db::run("DELETE FROM posts WHERE slug = 'by-author'");
     Db::run("DELETE FROM not_found");
 
+    echo "Contact form\n";
+    $sent = [];
+    Mailer::$transport = static function (array $m) use (&$sent): array {
+        $sent[] = $m;
+        return [true, ''];
+    };
+    $tok = Contact::token(time() - 10);
+    $form = ['name' => 'Pat Visitor', 'email' => 'pat@example.org', 'message' => 'Hello, I would like to talk about a partnership.', 'website' => '', 't' => $tok[0], 's' => $tok[1]];
+    $r = Contact::submit($form, '203.0.113.5');
+    check($r['ok'] && count($sent) === 1, 'valid message is accepted and emailed');
+    check($sent[0]['to'] === 'admin@example.com' && $sent[0]['reply_to'] === 'pat@example.org' && str_contains($sent[0]['subject'], 'Pat Visitor'), 'mail goes to the owner with the visitor as reply-to');
+    check((int)Db::val('SELECT COUNT(*) FROM messages') === 1 && Db::val('SELECT mail_status FROM messages') === 'sent', 'message is saved with status sent');
+    check(Db::val('SELECT ip_hash FROM messages') !== '203.0.113.5' && strlen((string)Db::val('SELECT ip_hash FROM messages')) === 32, 'IP address is stored only as a hash');
+    $home = Site::response('/')['body'];
+    check(!str_contains($home, 'admin@example.com'), 'the owner email address is not shown on the page');
+    check(str_contains($home, 'action="/contact"') && str_contains($home, 'name="message"') && str_contains($home, 'name="website"'), 'contact form is on the page');
+
+    $before = count($sent);
+    check(Contact::submit(['website' => 'http://spam.test'] + $form, '203.0.113.6')['ok'] && count($sent) === $before && (int)Db::val('SELECT COUNT(*) FROM messages') === 1, 'filled honeypot is dropped silently');
+    $fast = Contact::token(time());
+    check(Contact::submit(['t' => $fast[0], 's' => $fast[1]] + $form, '203.0.113.7')['error'] === 'expired', 'a form sent too fast is refused');
+    check(Contact::submit(['s' => 'deadbeef'] + $form, '203.0.113.7')['error'] === 'expired', 'a forged token is refused');
+    $old = Contact::token(time() - 8000);
+    check(Contact::submit(['t' => $old[0], 's' => $old[1]] + $form, '203.0.113.7')['error'] === 'expired', 'an old form is refused');
+    check(Contact::submit(['email' => 'not-an-email'] + $form, '203.0.113.7')['error'] === 'invalid', 'invalid email is refused');
+    check(Contact::submit(['email' => "pat@example.org\r\nBcc: x@y.z"] + $form, '203.0.113.7')['error'] === 'invalid', 'email with a line break is refused');
+    check(Contact::submit(['message' => 'short'] + $form, '203.0.113.7')['error'] === 'invalid', 'too short message is refused');
+    check(Contact::submit(['name' => ''] + $form, '203.0.113.7')['error'] === 'invalid', 'missing name is refused');
+    check(Contact::submit(['message' => 'see http://a.test http://b.test http://c.test now'] + $form, '203.0.113.7')['error'] === 'spam', 'link-heavy message is refused');
+    Contact::submit(['name' => "Evil\r\nBcc: x@y.z"] + $form, '203.0.113.8');
+    $last = end($sent);
+    check(!str_contains($last['subject'], "\n") && !str_contains($last['subject'], "\r"), 'line breaks in the name can not inject mail headers');
+
+    $ok = 0;
+    for ($i = 0; $i < 5; $i++) {
+        $ok += Contact::submit($form, '198.51.100.9')['ok'] ? 1 : 0;
+    }
+    check($ok === 5 && Contact::submit($form, '198.51.100.9')['error'] === 'rate', 'a sixth message in an hour from one visitor is refused');
+
+    Mailer::$transport = static fn(array $m): array => [false, 'smtp is down'];
+    $r = Contact::submit($form, '198.51.100.10');
+    check($r['ok'] && Db::val("SELECT mail_status FROM messages WHERE ip_hash = '" . substr(hash('sha256', '198.51.100.10' . rp_config()['secret']), 0, 32) . "'") === 'failed', 'a failed email still saves the message and marks it');
+    Mailer::$transport = null;
+    Db::run('DELETE FROM messages');
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

@@ -56,6 +56,7 @@ Open `/admin` on your site.
 | 404 page, Redirects | Edit the page for unknown addresses; redirect old addresses to new ones; see which addresses were not found |
 | Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |
 | Updates | Check for and install new versions |
+| Messages, Email | Inbox for the contact form; SMTP settings so messages reach you reliably |
 | Users | Add people and give them a level: Admin, Editor or Author (admins only) |
 | Account | Change your name, email and password |
 
@@ -90,6 +91,7 @@ The updater makes a backup before every update. For regular backups, copy the `s
 - Fonts are hosted by your own site. No request goes to Google when someone visits.
 - YouTube videos load only when a visitor presses play, and then from `youtube-nocookie.com`.
 - The public pages set no cookies.
+- The contact form stores each visitor's IP address only as a salted hash (for the rate limit). Messages contain personal data: mention the form in your privacy policy.
 - Passwords are hashed, logins are rate limited, forms are protected against cross-site requests,
   and uploaded images are re-encoded so only pixels are kept (SVG is not accepted).
 - `storage/` holds your database and backups. It is blocked from the web by `.htaccess` (Apache) or the nginx rule above.
@@ -137,7 +139,7 @@ tests/           smoke tests
 - Designs have light or dark palettes by preset; there is no automatic switch to the visitor's dark mode yet.
 - Fonts are the Latin subset (covers English, German, Scandinavian, French, Spanish and similar).
 - Logos must be PNG, JPG or WebP (no SVG, for security).
-- There is no contact form, only the email address with copy and *Write an email* buttons.
+- The contact form has no captcha. It uses a hidden trap field, timing and rate limits, which stops most bots.
 - The admin area is in English; the public page texts are English or German.
 
 ## License

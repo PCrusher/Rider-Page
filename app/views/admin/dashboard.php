@@ -1,4 +1,4 @@
-<?php /** Variables: $steps $hidden $update $maintenance $notFound $pending */ ?>
+<?php /** Variables: $steps $hidden $update $maintenance $notFound $pending $unread */ ?>
 <h1>Dashboard</h1>
 <p class="muted">Welcome back. Here is where your page stands.</p>
 
@@ -6,6 +6,13 @@
   <div class="box bad">
     <b>Maintenance mode is on.</b> Visitors see a maintenance page instead of your site.
     <a href="<?= e(url('/admin/maintenance')) ?>">Turn it off</a>
+  </div>
+<?php endif; ?>
+
+<?php if ($unread > 0): ?>
+  <div class="box warn">
+    <b><?= (int)$unread ?> new message<?= $unread === 1 ? '' : 's' ?> from the contact form.</b>
+    <a href="<?= e(url('/admin/messages')) ?>">Open the inbox</a>
   </div>
 <?php endif; ?>
 

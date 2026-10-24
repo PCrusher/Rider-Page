@@ -8,7 +8,7 @@ final class Roles
 
     public const HELP = [
         'admin' => 'Everything, including design, updates, maintenance and users.',
-        'editor' => 'All content, blog posts, redirects and the 404 page. Publishes posts. No design, updates, maintenance or users.',
+        'editor' => 'All content, blog posts, messages, redirects and the 404 page. Publishes posts. No design, updates, maintenance or users.',
         'author' => 'Writes their own blog posts. A post goes live after an editor or admin approves it.',
     ];
 
@@ -30,6 +30,8 @@ final class Roles
         'sections' => self::STAFF,
         'errorpage' => self::STAFF,
         'redirects' => self::STAFF,
+        'messages' => self::STAFF,
+        'email' => ['admin'],
         'appearance' => ['admin'],
         'maintenance' => ['admin'],
         'update' => ['admin'],

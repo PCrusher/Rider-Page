@@ -8,6 +8,7 @@ $items = [
     ['stats', 'Results', '/admin/stats', 'Content'],
     ['sponsors', 'Partners', '/admin/sponsors', 'Content'],
     ['media', 'Photos', '/admin/media', 'Content'],
+    ['messages', 'Messages', '/admin/messages', 'Content'],
     ['posts', 'Blog', '/admin/posts', 'Content'],
     ['faqs', 'FAQ', '/admin/faqs', 'Content'],
     ['sections', 'Sections', '/admin/sections', 'Page'],
@@ -16,6 +17,7 @@ $items = [
     ['errorpage', '404 page', '/admin/errorpage', 'Page'],
     ['redirects', 'Redirects', '/admin/redirects', 'Page'],
     ['users', 'Users', '/admin/users', 'System'],
+    ['email', 'Email', '/admin/email', 'System'],
     ['update', 'Updates', '/admin/update', 'System'],
     ['account', 'Account', '/admin/account', 'System'],
 ];

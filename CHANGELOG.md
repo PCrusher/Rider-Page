@@ -3,6 +3,14 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.5.0
+
+- Contact form replaces the visible email address. Visitors write name, email and message; the message is emailed to the contact address from the profile and saved in **Admin -> Messages** (new inbox, with unread markers and a notice on the dashboard).
+- **Admin -> Email** (admins): SMTP server, port, encryption, login and sender, plus a "send a test email" button. Without an SMTP server the server's own mail function is used.
+- Spam protection without a captcha: hidden trap field, signed form time (too fast or too old is refused), at most 5 messages per hour per visitor and 40 per hour in total, and a limit on links. The visitor's IP address is stored only as a salted hash.
+- A message is saved even if the email fails, and the inbox shows which ones were not emailed and why.
+- Adds the `messages` table. Existing content is not touched.
+
 ## 0.4.0
 
 - User levels: **Admin** (everything), **Editor** (content, blog, redirects, 404 page; publishes posts), **Author** (writes own posts, which go live after approval). New *Admin -> Users* page to add, change and remove people.

@@ -130,6 +130,10 @@ final class Admin
             self::appearance($post);
         } elseif ($sec === 'maintenance') {
             self::maintenance($post);
+        } elseif ($sec === 'messages') {
+            self::messages($act, $post);
+        } elseif ($sec === 'email') {
+            self::email($post);
         } elseif ($sec === 'errorpage') {
             self::errorPage($post);
         } elseif ($sec === 'redirects') {
@@ -218,8 +222,18 @@ final class Admin
             'maintenance' => Site::maintenanceOn(),
             'notFound' => self::notFoundCount(),
             'pending' => (int)Db::val("SELECT COUNT(*) FROM posts WHERE status = 'pending'"),
+            'unread' => self::unreadCount(),
             'update' => Updater::cached(),
         ], 'Dashboard');
+    }
+
+    private static function unreadCount(): int
+    {
+        try {
+            return (int)Db::val("SELECT COUNT(*) FROM messages WHERE read_at = ''");
+        } catch (Throwable) {
+            return 0;
+        }
     }
 
     private static function notFoundCount(): int
@@ -654,6 +668,86 @@ final class Admin
             'defaultTitle' => t('maint.title'),
             'defaultText' => t('maint.text'),
         ], 'Maintenance');
+    }
+
+    /* ---------- contact messages and email settings ---------- */
+
+    private static function messages(string $act, bool $post): void
+    {
+        if ($post && $act === 'delete') {
+            Db::delete('messages', 'id = ?', [(int)($_POST['id'] ?? 0)]);
+            flash('Message deleted.');
+            redirect('/admin/messages');
+        }
+        if ($act === 'view') {
+            $m = Db::row('SELECT * FROM messages WHERE id = ?', [(int)($_GET['id'] ?? 0)]);
+            if (!$m) {
+                redirect('/admin/messages');
+            }
+            if ($m['read_at'] === '') {
+                Db::update('messages', ['read_at' => now()], 'id = ?', [(int)$m['id']]);
+            }
+            self::view('message', ['m' => $m], 'Message');
+            return;
+        }
+        self::view('messages', [
+            'rows' => Db::rows('SELECT * FROM messages ORDER BY id DESC LIMIT 200'),
+            'hasEmail' => trim((string)Settings::get('email', '')) !== '',
+        ], 'Messages');
+    }
+
+    private static function email(bool $post): void
+    {
+        if ($post) {
+            $from = trim((string)($_POST['mail_from'] ?? ''));
+            $port = (int)($_POST['smtp_port'] ?? 587);
+            $secure = (string)($_POST['smtp_secure'] ?? 'tls');
+            $errors = [];
+            if ($from !== '' && !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = 'The sender address is not a valid email address.';
+            }
+            if ($port < 1 || $port > 65535) {
+                $errors[] = 'The port must be a number between 1 and 65535.';
+            }
+            if (!in_array($secure, ['tls', 'ssl', 'none'], true)) {
+                $secure = 'tls';
+            }
+            if ($errors) {
+                flash(implode(' ', $errors), 'error');
+                redirect('/admin/email');
+            }
+            Settings::setMany([
+                'mail_from' => $from,
+                'mail_from_name' => mb_substr(trim((string)($_POST['mail_from_name'] ?? '')), 0, 100),
+                'smtp_host' => trim((string)($_POST['smtp_host'] ?? '')),
+                'smtp_port' => (string)$port,
+                'smtp_secure' => $secure,
+                'smtp_user' => trim((string)($_POST['smtp_user'] ?? '')),
+            ]);
+            if (!empty($_POST['clear_pass'])) {
+                Settings::set('smtp_pass', '');
+            } elseif ((string)($_POST['smtp_pass'] ?? '') !== '') {
+                Settings::set('smtp_pass', (string)$_POST['smtp_pass']);
+            }
+            if (!empty($_POST['test'])) {
+                [$ok, $err] = Mailer::send((string)self::$user['email'], 'Test email from Rider Page',
+                    "This is a test email from your website.\nIf you can read it, the contact form can reach you.\n");
+                flash($ok ? 'Saved. A test email was sent to ' . self::$user['email'] . '. Check your inbox and spam folder.' : 'Saved, but the test email failed: ' . $err, $ok ? 'ok' : 'error');
+            } else {
+                flash('Saved.');
+            }
+            redirect('/admin/email');
+        }
+        $get = static fn(string $k, string $d = ''): string => (string)Settings::get($k, $d);
+        self::view('email', [
+            'v' => [
+                'mail_from' => $get('mail_from'), 'mail_from_name' => $get('mail_from_name'), 'smtp_host' => $get('smtp_host'),
+                'smtp_port' => $get('smtp_port', '587'), 'smtp_secure' => $get('smtp_secure', 'tls'), 'smtp_user' => $get('smtp_user'),
+            ],
+            'hasPass' => $get('smtp_pass') !== '',
+            'defaultFrom' => Mailer::from()[0],
+            'recipient' => $get('email'),
+        ], 'Email');
     }
 
     /* ---------- 404 page and redirects ---------- */

@@ -6,8 +6,15 @@ final class Site
 {
     public const SECTIONS = ['results', 'sponsors', 'media', 'blog', 'faq', 'contact'];
 
+    /** State of the contact form after a failed submission, shown again on the page. */
+    private static ?array $contactState = null;
+
     public static function dispatch(string $path, string $method): void
     {
+        if ($path === '/contact' && $method === 'POST') {
+            self::handleContact();
+            return;
+        }
         $r = self::response($path);
         http_response_code($r['status']);
         header('Content-Type: ' . $r['type']);
@@ -18,6 +25,31 @@ final class Site
             send_headers(false);
         }
         echo $r['body'];
+    }
+
+    private static function handleContact(): void
+    {
+        $out = static function (array $r): void {
+            http_response_code($r['status']);
+            header('Content-Type: ' . $r['type']);
+            foreach ($r['headers'] as $h) {
+                header($h);
+            }
+            send_headers(false);
+            echo $r['body'];
+        };
+        if (self::maintenanceOn() && !self::isAdmin()) {
+            $out(self::response('/'));
+            return;
+        }
+        $res = Contact::submit($_POST, client_ip());
+        if ($res['ok']) {
+            redirect('/?sent=1#contact');
+        }
+        self::$contactState = ['error' => $res['error'], 'values' => $res['values']];
+        $r = self::page(422, self::home());
+        $r['headers'][] = 'Cache-Control: no-store';
+        $out($r);
     }
 
     /** @return array{status:int,type:string,body:string,headers:string[]} */
@@ -288,6 +320,9 @@ final class Site
             'hasBlog' => in_array('blog', $sections, true) || count(self::posts(1)) > 0,
             'nav' => array_values(array_filter($sections, static fn($id) => $id !== 'contact')),
             'hasContact' => in_array('contact', $sections, true),
+            'contactState' => self::$contactState ?? ['error' => '', 'values' => ['name' => '', 'email' => '', 'message' => '']],
+            'sent' => (string)($_GET['sent'] ?? '') === '1',
+            'formToken' => Contact::token(),
         ];
     }
 
