@@ -57,7 +57,15 @@ $homeUrl = url('/');
     </div>
   </nav>
   <main id="main"><?= $content ?></main>
-  <div class="in"><div class="foot"><span>© <?= date('Y') ?> <?= e($p['name']) ?></span><span><?= e(t('foot.built')) ?></span></div></div>
+  <div class="in"><div class="foot">
+    <span>© <?= date('Y') ?> <?= e($p['name']) ?></span>
+    <?php if (!empty($footerPages)): ?>
+      <nav class="foot-links" aria-label="<?= e(t('foot.legal')) ?>">
+        <?php foreach ($footerPages as $fp): ?><a href="<?= e(url('/' . $fp['slug'])) ?>"><?= e($fp['title']) ?></a><?php endforeach; ?>
+      </nav>
+    <?php endif; ?>
+    <span><?= e(t('foot.built')) ?></span>
+  </div></div>
 </div>
 </body>
 </html>

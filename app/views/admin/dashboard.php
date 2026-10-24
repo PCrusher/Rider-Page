@@ -1,4 +1,4 @@
-<?php /** Variables: $steps $hidden $update $maintenance $notFound $pending $unread */ ?>
+<?php /** Variables: $steps $hidden $update $maintenance $notFound $pending $unread $legalMissing */ ?>
 <h1>Dashboard</h1>
 <p class="muted">Welcome back. Here is where your page stands.</p>
 
@@ -6,6 +6,13 @@
   <div class="box bad">
     <b>Maintenance mode is on.</b> Visitors see a maintenance page instead of your site.
     <a href="<?= e(url('/admin/maintenance')) ?>">Turn it off</a>
+  </div>
+<?php endif; ?>
+
+<?php if ($legalMissing): ?>
+  <div class="box warn">
+    <b>No legal pages are published yet.</b> Depending on where you live, a legal notice (Impressum) and a privacy policy are required.
+    <a href="<?= e(url('/admin/legal')) ?>">Choose your country and create them</a>
   </div>
 <?php endif; ?>
 

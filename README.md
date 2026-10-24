@@ -57,6 +57,7 @@ Open `/admin` on your site.
 | Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |
 | Updates | Check for and install new versions |
 | Messages, Email | Inbox for the contact form; SMTP settings so messages reach you reliably |
+| Pages, Legal pages | Own pages (about, legal notice, privacy). Guided set-up of the legal pages for your country, as drafts you review and publish |
 | Users | Add people and give them a level: Admin, Editor or Author (admins only) |
 | Account | Change your name, email and password |
 

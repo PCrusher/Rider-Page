@@ -134,6 +134,10 @@ final class Admin
             self::appearance($post);
         } elseif ($sec === 'maintenance') {
             self::maintenance($post);
+        } elseif ($sec === 'pages') {
+            self::pages($act, $post);
+        } elseif ($sec === 'legal') {
+            self::legal($post);
         } elseif ($sec === 'messages') {
             self::messages($act, $post);
         } elseif ($sec === 'email') {
@@ -227,8 +231,19 @@ final class Admin
             'notFound' => self::notFoundCount(),
             'pending' => (int)Db::val("SELECT COUNT(*) FROM posts WHERE status = 'pending'"),
             'unread' => self::unreadCount(),
+            'legalMissing' => self::$user['role'] === 'admin' && self::legalMissing(),
             'update' => Updater::cached(),
         ], 'Dashboard');
+    }
+
+    /** True when no published page was made from a legal template. */
+    private static function legalMissing(): bool
+    {
+        try {
+            return (int)Db::val("SELECT COUNT(*) FROM pages WHERE status = 'published' AND template <> ''") === 0;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     private static function unreadCount(): int
@@ -715,6 +730,162 @@ final class Admin
             'defaultTitle' => t('maint.title'),
             'defaultText' => t('maint.text'),
         ], 'Maintenance');
+    }
+
+    /* ---------- pages and legal pages ---------- */
+
+    private static function pages(string $act, bool $post): void
+    {
+        if ($act === '' && !$post) {
+            self::view('pages', ['rows' => Db::rows('SELECT * FROM pages ORDER BY pos, id')], 'Pages');
+            return;
+        }
+        if ($act === 'edit' && !$post) {
+            $id = (int)($_GET['id'] ?? 0);
+            $row = $id ? Db::row('SELECT * FROM pages WHERE id = ?', [$id]) : null;
+            if ($id && !$row) {
+                redirect('/admin/pages');
+            }
+            self::pageForm($row ?? ['title' => '', 'slug' => '', 'body' => '', 'status' => 'draft', 'in_footer' => 1, 'template' => ''], $id, []);
+            return;
+        }
+        if ($act === 'save' && $post) {
+            $id = (int)($_POST['id'] ?? 0);
+            $old = $id ? Db::row('SELECT * FROM pages WHERE id = ?', [$id]) : null;
+            if ($id && !$old) {
+                redirect('/admin/pages');
+            }
+            $title = trim((string)($_POST['title'] ?? ''));
+            $slug = slugify(trim((string)($_POST['slug'] ?? '')) ?: $title);
+            $errors = [];
+            if ($title === '') {
+                $errors[] = 'Title is required.';
+            }
+            if ($slug !== '' || $title !== '') {
+                $err = Legal::slugError($slug, $id);
+                if ($err !== null) {
+                    $errors[] = $err;
+                }
+            }
+            $data = [
+                'title' => mb_substr($title, 0, 190),
+                'slug' => $slug,
+                'body' => str_replace("\r\n", "\n", (string)($_POST['body'] ?? '')),
+                'status' => ($_POST['status'] ?? '') === 'published' ? 'published' : 'draft',
+                'in_footer' => !empty($_POST['in_footer']) ? 1 : 0,
+                'updated_at' => now(),
+            ];
+            if ($errors) {
+                self::pageForm($data + ['template' => (string)($old['template'] ?? '')], $id, $errors);
+                return;
+            }
+            if ($id) {
+                Db::update('pages', $data, 'id = ?', [$id]);
+            } else {
+                $data['pos'] = (int)Db::val('SELECT COALESCE(MAX(pos), 0) FROM pages') + 1;
+                Db::insert('pages', $data);
+            }
+            flash($data['status'] === 'published' ? 'Saved and published.' : 'Saved as draft. It is not visible to visitors yet.');
+            redirect('/admin/pages');
+        }
+        if ($act === 'delete' && $post) {
+            Db::delete('pages', 'id = ?', [(int)($_POST['id'] ?? 0)]);
+            flash('Page deleted.');
+            redirect('/admin/pages');
+        }
+        if ($act === 'move' && $post) {
+            self::move('pages', (int)($_POST['id'] ?? 0), (string)($_POST['dir'] ?? ''));
+            redirect('/admin/pages');
+        }
+        redirect('/admin/pages');
+    }
+
+    private static function pageForm(array $row, int $id, array $errors): void
+    {
+        self::view('page_edit', ['row' => $row, 'id' => $id, 'errors' => $errors], $id ? 'Edit page' : 'New page');
+    }
+
+    private static function legal(bool $post): void
+    {
+        $regions = Legal::regions();
+        if ($post) {
+            $region = (string)($_POST['region'] ?? '');
+            if (!isset($regions[$region])) {
+                flash('Choose where you are based first.', 'error');
+                redirect('/admin/legal');
+            }
+            $langs = Legal::langs($region);
+            $lang = (string)($_POST['lang'] ?? '');
+            if (!in_array($lang, $langs, true)) {
+                $lang = $langs[0] ?? 'en';
+            }
+            $t = static fn(string $k, int $max = 190): string => mb_substr(trim((string)($_POST[$k] ?? '')), 0, $max);
+            $email = $t('email');
+            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                flash('The email address is not valid.', 'error');
+                redirect('/admin/legal');
+            }
+            Settings::setMany([
+                'legal_region' => $region, 'legal_lang' => $lang,
+                'legal_type' => ($_POST['type'] ?? '') === 'private' ? 'private' : 'commercial',
+                'legal_form' => ($_POST['form'] ?? '') === 'company' ? 'company' : 'person',
+                'legal_name' => $t('name'), 'legal_street' => $t('street'), 'legal_city' => $t('city'), 'legal_country' => $t('country'),
+                'legal_email' => $email, 'legal_phone' => $t('phone'), 'legal_register' => $t('register'), 'legal_vat' => $t('vat'),
+                'legal_responsible' => $t('responsible'), 'legal_hosting' => $t('hosting'), 'legal_retention' => $t('retention', 60),
+                'legal_other_services' => $t('other_services', 2000),
+                'legal_f_contact_form' => !empty($_POST['f_contact_form']) ? '1' : '0',
+                'legal_f_youtube' => !empty($_POST['f_youtube']) ? '1' : '0',
+                'legal_f_sponsors' => !empty($_POST['f_sponsors']) ? '1' : '0',
+            ]);
+            if (!empty($_POST['create'])) {
+                $need = ['name' => 'name', 'email' => 'email'];
+                if ($region !== 'us') {
+                    $need += ['street' => 'street', 'city' => 'postcode and city'];
+                }
+                $missing = [];
+                foreach ($need as $k => $label) {
+                    if ($t($k) === '') {
+                        $missing[] = $label;
+                    }
+                }
+                if ($missing) {
+                    flash('Saved. Fill in your ' . implode(', ', $missing) . ' before the pages are created.', 'error');
+                    redirect('/admin/legal');
+                }
+                $res = Legal::create($region, $lang, !empty($_POST['replace']));
+                $parts = [];
+                foreach (['created' => 'Created', 'updated' => 'Updated', 'skipped' => 'Left as they were (already exist)'] as $key => $label) {
+                    if ($res[$key]) {
+                        $parts[] = $label . ': ' . implode(', ', $res[$key]);
+                    }
+                }
+                flash(($parts ? implode('. ', $parts) . '. ' : '') . 'The new pages are drafts. Read them, fix anything that does not fit, then publish them.');
+                redirect('/admin/pages');
+            }
+            flash('Saved.');
+            redirect('/admin/legal');
+        }
+
+        $g = static fn(string $k, string $d = ''): string => (string)Settings::get('legal_' . $k, $d);
+        $region = $g('region');
+        $langs = isset($regions[$region]) ? Legal::langs($region) : [];
+        $lang = in_array($g('lang', Lang::code()), $langs, true) ? $g('lang', Lang::code()) : ($langs[0] ?? 'en');
+        $status = [];
+        foreach (Legal::kinds($region) as $kind) {
+            [$slug, $title] = Legal::pageInfo($kind, $lang);
+            $row = Db::row('SELECT status, template FROM pages WHERE slug = ?', [$slug]);
+            $status[] = ['slug' => $slug, 'title' => $title, 'row' => $row];
+        }
+        self::view('legal', [
+            'regions' => $regions, 'region' => $region, 'langs' => $langs, 'lang' => $lang, 'status' => $status,
+            'v' => [
+                'type' => $g('type', 'commercial'), 'form' => $g('form', 'person'),
+                'name' => $g('name') ?: (string)Settings::get('name', ''), 'street' => $g('street'), 'city' => $g('city'), 'country' => $g('country'),
+                'email' => $g('email') ?: (string)Settings::get('email', ''), 'phone' => $g('phone'), 'register' => $g('register'), 'vat' => $g('vat'),
+                'responsible' => $g('responsible'), 'hosting' => $g('hosting'), 'retention' => $g('retention'), 'other_services' => $g('other_services'),
+                'f_contact_form' => Legal::feature('contact_form'), 'f_youtube' => Legal::feature('youtube'), 'f_sponsors' => Legal::feature('sponsors'),
+            ],
+        ], 'Legal pages');
     }
 
     /* ---------- contact messages and email settings ---------- */

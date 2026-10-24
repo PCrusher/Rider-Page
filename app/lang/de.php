@@ -41,6 +41,7 @@ return [
     'video.note' => 'Das Video wird erst beim Abspielen von YouTube geladen',
     'video.watch' => 'Auf YouTube ansehen',
     'video.open' => 'Auf YouTube öffnen',
+    'foot.legal' => 'Rechtliches',
     'foot.built' => 'Erstellt mit Rider Page',
     'nav.top' => 'Nach oben',
     'skip' => 'Zum Inhalt springen',

@@ -11,6 +11,8 @@ $items = [
     ['messages', 'Messages', '/admin/messages', 'Content'],
     ['posts', 'Blog', '/admin/posts', 'Content'],
     ['faqs', 'FAQ', '/admin/faqs', 'Content'],
+    ['pages', 'Pages', '/admin/pages', 'Content'],
+    ['legal', 'Legal pages', '/admin/legal', 'Content'],
     ['sections', 'Sections', '/admin/sections', 'Page'],
     ['appearance', 'Appearance', '/admin/appearance', 'Page'],
     ['maintenance', 'Maintenance', '/admin/maintenance', 'Page'],

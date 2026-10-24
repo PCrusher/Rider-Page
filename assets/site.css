@@ -193,6 +193,9 @@ a.sp:hover { border-color: var(--s-accent); }
 .form-note { padding: 10px 14px; border-radius: var(--rad); background: color-mix(in srgb, currentColor 16%, transparent); opacity: 1 !important; max-width: none !important; }
 .form-note.err { outline: 2px solid currentColor; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.foot-links a { color: inherit; }
+.foot-links a:hover { color: var(--s-fg); }
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; font: 400 .75rem var(--f-mono); color: var(--s-muted); padding-block: 56px 28px; }
 
 /* blog pages */

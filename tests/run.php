@@ -316,6 +316,68 @@ try {
     Settings::setMany(['sec_sponsors_title' => '', 'sec_sponsors_kicker' => '', 'sec_sponsors_show_title' => '1', 'sec_sponsors_show_kicker' => '1', 'tier_title_label' => '', 'tier_title_show' => '1']);
     check(str_contains(Site::response('/')['body'], '<h2>Partners</h2>'), 'empty texts fall back to the defaults');
 
+    echo "Pages and legal templates\n";
+    check(Legal::render('A {{#if x}}B {{#if y}}C{{/if}}{{/if}}D', [], ['x' => true, 'y' => false]) === "A B D\n", 'nested conditionals work');
+    check(Legal::render('{{#unless x}}no{{/unless}}{{#if x}}yes{{/if}}', [], ['x' => true]) === "yes\n", 'unless works');
+    check(Legal::render("Phone: {{phone}}\nEmail: {{email}}", ['phone' => '', 'email' => 'a@b.c'], []) === "Email: a@b.c\n", 'a line with an empty value is left out');
+    check(Legal::render("- a\n{{#if x}}\n- b\n{{/if}}\n- c", [], ['x' => true]) === "- a\n- b\n- c\n", 'list items stay together after conditionals');
+    check(Legal::slugError('admin') !== null && Legal::slugError('Foo Bar') !== null && Legal::slugError('impressum') === null, 'page addresses are validated');
+
+    $bad = [];
+    foreach (Legal::regions() as $rid => $reg) {
+        if (Legal::langs($rid) === []) {
+            $bad[] = "$rid has no language";
+        }
+        foreach (Legal::langs($rid) as $lang) {
+            foreach ($reg['kinds'] as $kind) {
+                $b = Legal::build($kind, $rid, $lang);
+                if ($b === null || str_contains($b['body'], '{{') || strlen($b['body']) < 200 || !preg_match('/^# /', $b['body'])) {
+                    $bad[] = "$rid/$lang/$kind";
+                }
+            }
+        }
+        foreach ($reg['needs'] as $need) {
+            if (count($need) !== 3 || !in_array($need[1], ['required', 'likely', 'recommended'], true)) {
+                $bad[] = "$rid needs entry";
+            }
+        }
+    }
+    check($bad === [], 'every region has templates in every offered language, with all placeholders resolved', implode(', ', $bad));
+
+    Settings::setMany(['legal_name' => 'Pat Example', 'legal_street' => 'Example Street 1', 'legal_city' => '12345 Sampletown', 'legal_email' => 'pat@example.org', 'legal_phone' => '', 'legal_f_contact_form' => '1', 'legal_f_youtube' => '0']);
+    Db::run('DELETE FROM pages');
+    $res = Legal::create('dach', 'de', false);
+    check($res['created'] === ['impressum', 'datenschutz', 'werbung'], 'DACH creates Impressum, Datenschutz and Werbung', implode(',', $res['created']));
+    check(Site::response('/impressum')['status'] === 404, 'a draft page is not public');
+    $imp = (string)Db::val("SELECT body FROM pages WHERE slug = 'impressum'");
+    check(str_contains($imp, 'Pat Example') && str_contains($imp, 'Example Street 1') && !str_contains($imp, 'Telefon'), 'details are filled in and an empty phone line is left out');
+    $priv = (string)Db::val("SELECT body FROM pages WHERE slug = 'datenschutz'");
+    check(str_contains($priv, 'Kontaktformular') && !str_contains($priv, 'YouTube'), 'privacy text follows the chosen features');
+    Db::run("UPDATE pages SET status = 'published'");
+    $r = Site::response('/impressum');
+    check($r['status'] === 200 && str_contains($r['body'], 'Example Street 1') && str_contains($r['body'], 'noindex'), 'a published legal page is shown, with noindex');
+    check(str_contains(Site::response('/')['body'], 'href="/datenschutz"'), 'published pages are linked in the footer on every page');
+    check(!str_contains(Site::response('/sitemap.xml')['body'], '/impressum'), 'legal pages stay out of the sitemap');
+
+    Db::run("UPDATE pages SET body = 'my own words' WHERE slug = 'datenschutz'");
+    Settings::set('legal_f_youtube', '1');
+    $res = Legal::create('dach', 'de', false);
+    check($res['created'] === [] && count($res['skipped']) === 3 && Db::val("SELECT body FROM pages WHERE slug = 'datenschutz'") === 'my own words', 'existing pages are not overwritten by default');
+    $res = Legal::create('dach', 'de', true);
+    check(count($res['updated']) === 3 && str_contains((string)Db::val("SELECT body FROM pages WHERE slug = 'datenschutz'"), 'YouTube'), 'replace updates template pages with the new settings');
+    Db::insert('pages', ['slug' => 'privacy', 'title' => 'Mine', 'body' => 'written by me', 'status' => 'published', 'in_footer' => 0, 'pos' => 9, 'template' => '', 'updated_at' => now()]);
+    $res = Legal::create('eu', 'en', true);
+    check(in_array('privacy', $res['skipped'], true) && Db::val("SELECT body FROM pages WHERE slug = 'privacy'") === 'written by me', 'a page the owner wrote is never replaced, even with replace on');
+    check(str_contains(Site::response('/sitemap.xml')['body'], '/privacy'), 'own pages are in the sitemap');
+    Db::run('DELETE FROM pages');
+    Legal::create('uk', 'en', false);
+    check(str_contains((string)Db::val("SELECT body FROM pages WHERE slug = 'privacy'"), 'Information Commissioner'), 'UK privacy notice names the ICO');
+    Db::run('DELETE FROM pages');
+    $res = Legal::create('us', 'en', false);
+    check(!in_array('legal-notice', $res['created'], true) && in_array('privacy', $res['created'], true), 'US needs no legal notice');
+    Db::run('DELETE FROM pages');
+    Settings::setMany(['legal_f_contact_form' => '', 'legal_f_youtube' => '']);
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

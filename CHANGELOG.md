@@ -3,6 +3,14 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.8.0
+
+- **Pages** (*Admin -> Pages*): your own pages with a title, an address, simple text formatting and draft or published status. Published pages can be linked in the footer of every page.
+- **Legal pages** (*Admin -> Legal pages*): choose where you are based (Germany/Austria/Switzerland, another EU or EEA country, United Kingdom, United States, elsewhere). The page explains which legal pages are required or expected there and why, then creates draft pages from templates that are filled with your details: legal notice (Impressum), privacy policy and a sponsorship and advertising page. Texts in English and, where it applies, German.
+- The privacy policy follows what the site does (contact form, YouTube, sponsors) and your own notes on other services. Pages you wrote yourself are never overwritten.
+- Legal pages are noindex and stay out of the sitemap. The dashboard reminds admins until a legal page is published.
+- The texts are templates, not legal advice. Adds a `pages` table.
+
 ## 0.7.0
 
 - Section headings and small labels are editable, and each can be switched off (*Admin -> Sections*, "Headings and labels"). The heading also names the section in the menu.

@@ -94,6 +94,12 @@ final class Site
                 return self::page(200, $html);
             }
         }
+        if (preg_match('#^/([a-z0-9-]{1,60})$#', $path, $m)) {
+            $html = self::staticPage($m[1]);
+            if ($html !== null) {
+                return self::page(200, $html);
+            }
+        }
         return self::notFound($path);
     }
 
@@ -261,6 +267,39 @@ final class Site
         ], $c);
     }
 
+    /** A page made in Admin -> Pages (legal pages included). */
+    private static function staticPage(string $slug): ?string
+    {
+        try {
+            $row = Db::row("SELECT * FROM pages WHERE slug = ? AND status = 'published'", [$slug]);
+        } catch (Throwable) {
+            return null; // table not created yet (update in progress)
+        }
+        if (!$row) {
+            return null;
+        }
+        $c = self::context();
+        $row['html'] = Markdown::render((string)$row['body']);
+        return self::layout([
+            'title' => $row['title'] . ' – ' . $c['p']['name'],
+            'description' => Markdown::excerpt((string)$row['body'], 155),
+            'canonical' => site_origin() . '/' . $row['slug'],
+            // Legal pages are not meant to rank in search results.
+            'noindex' => (string)$row['template'] !== '',
+            'content' => tpl('themes/views/page', $c + ['page' => $row]),
+        ], $c);
+    }
+
+    /** @return array<int,array{slug:string,title:string}> pages that are linked in the footer */
+    private static function footerPages(): array
+    {
+        try {
+            return Db::rows("SELECT slug, title FROM pages WHERE status = 'published' AND in_footer = 1 ORDER BY pos, id");
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
     private static function sitemap(): string
     {
         $o = site_origin();
@@ -268,6 +307,12 @@ final class Site
         $posts = self::posts();
         if ($posts) {
             $urls[] = [$o . '/blog', substr((string)$posts[0]['published_at'], 0, 10)];
+        }
+        try {
+            foreach (Db::rows("SELECT slug, updated_at FROM pages WHERE status = 'published' AND template = ''") as $pg) {
+                $urls[] = [$o . '/' . $pg['slug'], substr((string)$pg['updated_at'], 0, 10)];
+            }
+        } catch (Throwable) {
         }
         foreach ($posts as $p) {
             $urls[] = [$o . '/blog/' . $p['slug'], substr((string)($p['updated_at'] ?? $p['published_at']), 0, 10)];
@@ -369,6 +414,7 @@ final class Site
             'nav' => array_values(array_filter($sections, static fn($id) => $id !== 'contact')),
             'hasContact' => in_array('contact', $sections, true),
             'titles' => self::titles(),
+            'footerPages' => self::footerPages(),
             'tierLabels' => self::tierLabels(),
             'contactState' => self::$contactState ?? ['error' => '', 'values' => ['name' => '', 'email' => '', 'message' => '']],
             'sent' => (string)($_GET['sent'] ?? '') === '1',

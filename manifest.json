@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: rename the section headings and the partner levels, and switch headings and labels on or off (Admin -> Sections).",
+  "changelog": "New: own Pages with footer links, and guided legal pages. Choose where you are based, read what is required there, and create draft Impressum / legal notice, privacy policy and sponsorship pages filled with your details. Adds a pages table.",
   "warnings": []
 }

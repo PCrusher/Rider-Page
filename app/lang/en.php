@@ -41,6 +41,7 @@ return [
     'video.note' => 'Loads the video from YouTube when you press play',
     'video.watch' => 'Watch on YouTube',
     'video.open' => 'Open on YouTube',
+    'foot.legal' => 'Legal',
     'foot.built' => 'Built with Rider Page',
     'nav.top' => 'Back to top',
     'skip' => 'Skip to content',

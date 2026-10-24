@@ -41,6 +41,9 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 
 ## Design
 
+- [ ] Legal pages: more countries and languages (French, Spanish, Dutch), terms of use template, accessibility statement, per-sponsor 'Ad' label and rel=sponsored on sponsor links
+- [ ] Legal pages: re-check the templates twice a year; mention the analytics once they exist
+
 - [ ] Photo credits in the lightbox and on blog list thumbnails; credit for sponsor logos is not needed
 
 - [ ] Visual preview of each preset in *Appearance* (small live thumbnail instead of colour strips)
@@ -83,3 +86,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.5.1: fix for the design cards in Appearance
 - 0.6.0: optional photo credits (name and link) for photos
 - 0.7.0: editable section headings, small labels and partner level names, each switchable
+- 0.8.0: Pages with footer links and guided legal pages (impressum, privacy, sponsorship notice)

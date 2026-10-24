@@ -31,6 +31,8 @@ final class Roles
         'errorpage' => self::STAFF,
         'redirects' => self::STAFF,
         'messages' => self::STAFF,
+        'pages' => self::STAFF,
+        'legal' => ['admin'],
         'email' => ['admin'],
         'appearance' => ['admin'],
         'maintenance' => ['admin'],
