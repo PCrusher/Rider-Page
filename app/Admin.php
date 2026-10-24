@@ -118,6 +118,8 @@ final class Admin
             self::sections($act, $post);
         } elseif ($sec === 'appearance') {
             self::appearance($post);
+        } elseif ($sec === 'maintenance') {
+            self::maintenance($post);
         } elseif ($sec === 'update') {
             self::update($act, $post);
         } elseif ($sec === 'account') {
@@ -188,6 +190,7 @@ final class Admin
         self::view('dashboard', [
             'steps' => $steps,
             'hidden' => $hidden,
+            'maintenance' => Site::maintenanceOn(),
             'update' => Updater::cached(),
         ], 'Dashboard');
     }
@@ -547,6 +550,36 @@ final class Admin
             ],
             'warnings' => Presets::warnings(),
         ], 'Appearance');
+    }
+
+    /* ---------- maintenance mode ---------- */
+
+    private static function maintenance(bool $post): void
+    {
+        if ($post) {
+            Settings::setMany([
+                'maintenance_title' => mb_substr(trim((string)($_POST['title'] ?? '')), 0, 120),
+                'maintenance_text' => mb_substr(trim((string)($_POST['text'] ?? '')), 0, 1000),
+            ]);
+            $toggle = (string)($_POST['toggle'] ?? '');
+            if ($toggle === 'on') {
+                Settings::set('maintenance', '1');
+                flash('Maintenance mode is on. Visitors now see the maintenance page.');
+            } elseif ($toggle === 'off') {
+                Settings::set('maintenance', '');
+                flash('Maintenance mode is off. Your page is live again.');
+            } else {
+                flash('Saved.');
+            }
+            redirect('/admin/maintenance');
+        }
+        self::view('maintenance', [
+            'on' => Site::maintenanceOn(),
+            'title' => (string)Settings::get('maintenance_title', ''),
+            'text' => (string)Settings::get('maintenance_text', ''),
+            'defaultTitle' => t('maint.title'),
+            'defaultText' => t('maint.text'),
+        ], 'Maintenance');
     }
 
     /* ---------- updates ---------- */

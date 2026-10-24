@@ -33,6 +33,17 @@ final class Site
                 . '<h1>' . e(t('maint.title')) . '</h1><p>' . e(t('maint.text')) . '</p></body></html>', ['Retry-After: 120']);
         }
 
+        if ($path !== '/robots.txt' && self::maintenanceOn() && !self::isAdmin()) {
+            $title = trim((string)Settings::get('maintenance_title', '')) ?: t('maint.title');
+            $text = trim((string)Settings::get('maintenance_text', '')) ?: t('maint.text');
+            return self::page(503, self::layout([
+                'title' => $title,
+                'content' => '<div class="in page-msg"><h1>' . e($title) . '</h1><p>' . nl2br(e($text)) . '</p></div>',
+                'noindex' => true,
+                'maintenance' => true,
+            ]), ['Retry-After: 3600', 'Cache-Control: no-store']);
+        }
+
         if ($path === '/robots.txt') {
             return self::page(200, "User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: " . site_origin() . "/sitemap.xml\n", [], 'text/plain; charset=utf-8');
         }
@@ -57,6 +68,28 @@ final class Site
                 . '</p><p><a class="btn" href="' . e(url('/')) . '">' . e(t('e404.home')) . '</a></p></div>',
             'noindex' => true,
         ]));
+    }
+
+    /* ---------- maintenance mode ---------- */
+
+    public static function maintenanceOn(): bool
+    {
+        return Settings::get('maintenance', '') === '1';
+    }
+
+    /** True when the visitor is logged in to the admin area (only looked up if a session cookie exists). */
+    public static function isAdmin(): bool
+    {
+        static $admin = null;
+        if ($admin === null) {
+            $admin = false;
+            if (PHP_SAPI !== 'cli' && !empty($_COOKIE['rp_session'])) {
+                rp_session();
+                $admin = !empty($_SESSION['uid']);
+                session_write_close();
+            }
+        }
+        return $admin;
     }
 
     /* ---------- pages ---------- */
@@ -271,8 +304,9 @@ final class Site
         $c ??= self::context();
         $v += [
             'description' => '', 'canonical' => '', 'image' => '', 'ogType' => 'website',
-            'jsonld' => null, 'noindex' => false, 'isHome' => false,
+            'jsonld' => null, 'noindex' => false, 'isHome' => false, 'maintenance' => false,
         ];
+        $v['adminBanner'] = self::maintenanceOn() && self::isAdmin();
         return tpl('themes/views/layout', $v + $c);
     }
 

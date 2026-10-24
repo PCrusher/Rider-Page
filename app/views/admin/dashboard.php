@@ -1,6 +1,13 @@
-<?php /** Variables: $steps $hidden $update */ ?>
+<?php /** Variables: $steps $hidden $update $maintenance */ ?>
 <h1>Dashboard</h1>
 <p class="muted">Welcome back. Here is where your page stands.</p>
+
+<?php if ($maintenance): ?>
+  <div class="box bad">
+    <b>Maintenance mode is on.</b> Visitors see a maintenance page instead of your site.
+    <a href="<?= e(url('/admin/maintenance')) ?>">Turn it off</a>
+  </div>
+<?php endif; ?>
 
 <?php if ($update && !empty($update['newer']) && !empty($update['ok'])): ?>
   <div class="box warn">

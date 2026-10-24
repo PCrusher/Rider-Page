@@ -37,9 +37,13 @@ $homeUrl = url('/');
 <body>
 <div class="site" data-design="<?= e($design) ?>" id="top-of-site">
   <a class="skip" href="#main"><?= e(t('skip')) ?></a>
+  <?php if (!empty($adminBanner)): ?>
+    <div class="maint-bar">Maintenance mode is on. Visitors see the maintenance page; you see the real site because you are logged in. <a href="<?= e(url('/admin/maintenance')) ?>">Turn it off</a></div>
+  <?php endif; ?>
   <nav class="snav" aria-label="<?= e($p['name']) ?>">
     <div class="in">
       <a class="mark" href="<?= e($isHome ? '#top' : $homeUrl) ?>"><?= e($p['name']) ?></a>
+      <?php if (empty($maintenance)): ?>
       <ul>
         <?php foreach ($nav as $id): ?>
           <?php $href = $id === 'blog' && !$isHome ? url('/blog') : ($isHome ? '' : $homeUrl) . '#' . $id; ?>
@@ -49,6 +53,7 @@ $homeUrl = url('/');
           <li><a class="btn primary" href="<?= e(($isHome ? '' : $homeUrl) . '#contact') ?>"><?= e(t('cta.inquiry')) ?></a></li>
         <?php endif; ?>
       </ul>
+      <?php endif; ?>
     </div>
   </nav>
   <main id="main"><?= $content ?></main>

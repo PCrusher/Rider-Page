@@ -130,6 +130,19 @@ try {
     check(str_contains(Presets::css(), '--s-accent:#FF0000'), 'accent override applied');
     Settings::set('color_accent', '');
 
+    echo "Maintenance\n";
+    Settings::set('maintenance', '1');
+    Settings::set('maintenance_title', 'Back soon');
+    $r = Site::response('/');
+    check($r['status'] === 503, 'maintenance mode answers 503');
+    check(str_contains($r['body'], 'Back soon') && !str_contains($r['body'], 'id="sponsors"'), 'maintenance page replaces the site');
+    check(in_array('Retry-After: 3600', $r['headers'], true), 'Retry-After header is sent');
+    check(str_contains($r['body'], 'noindex'), 'maintenance page is noindex');
+    check(Site::response('/blog/welcome')['status'] === 503, 'blog is in maintenance too');
+    check(Site::response('/robots.txt')['status'] === 200, 'robots.txt stays available');
+    Settings::set('maintenance', '');
+    check(Site::response('/')['status'] === 200, 'site is back when maintenance is off');
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

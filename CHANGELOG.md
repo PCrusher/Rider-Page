@@ -3,6 +3,10 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.2.0
+
+- Maintenance mode: switch the page offline for visitors in *Admin → Maintenance*, with your own heading and message. Visitors get a 503 page with `noindex` so search rankings are kept; you stay logged in and see the real site with a reminder bar. Off by default.
+
 ## 0.1.1
 
 - A server with PHP older than 8.1 now shows a readable message instead of a blank 500 page.

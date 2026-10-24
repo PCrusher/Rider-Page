@@ -51,6 +51,7 @@ Open `/admin` on your site.
 | Blog | Posts with a cover image, pictures, links and YouTube. Drafts and future dates are supported |
 | Sections | Order of the sections and switch sections on or off. Empty sections hide themselves |
 | Appearance | 10 presets, accent colour, background and text colour, with a contrast warning |
+| Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |
 | Updates | Check for and install new versions |
 | Account | Change email and password |
 

@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "Shows a readable message instead of a blank page when the PHP version is too old or a fatal error happens.",
+  "changelog": "New: maintenance mode. Switch your page offline for visitors from the admin area. It is off by default.",
   "warnings": []
 }

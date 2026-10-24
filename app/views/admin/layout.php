@@ -11,6 +11,7 @@ $items = [
     ['faqs', 'FAQ', '/admin/faqs', null],
     ['sections', 'Sections', '/admin/sections', 'Page'],
     ['appearance', 'Appearance', '/admin/appearance', null],
+    ['maintenance', 'Maintenance', '/admin/maintenance', null],
     ['update', 'Updates', '/admin/update', 'System'],
     ['account', 'Account', '/admin/account', null],
 ];
