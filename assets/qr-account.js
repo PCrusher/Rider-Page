@@ -11,6 +11,7 @@
   var img = document.getElementById('qr-img');
   var msg = document.getElementById('qr-msg');
   var again = document.getElementById('qr-again');
+  var totp = document.getElementById('qr-totp');
   var timer = null, poller = null, left = 0, id = 0, busy = false;
 
   function stop() { clearInterval(timer); clearInterval(poller); busy = false; }
@@ -27,6 +28,7 @@
     var fd = new FormData();
     fd.append('_csrf', box.getAttribute('data-csrf'));
     fd.append('current', pw.value);
+    if (totp) { fd.append('code', totp.value); }
     ask.hidden = true;
     shown.hidden = false;
     again.hidden = true;
@@ -36,6 +38,7 @@
       .then(function (r) { return r.json(); })
       .then(function (j) {
         pw.value = '';
+        if (totp) { totp.value = ''; }
         if (!j.ok) { end(j.error || 'A code could not be created.'); return; }
         id = j.id;
         left = j.ttl;

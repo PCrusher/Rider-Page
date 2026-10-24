@@ -102,6 +102,22 @@ final class Admin
             self::qrLogin($post);
             return;
         }
+        if ($path === '/admin/forgot') {
+            self::forgot($post);
+            return;
+        }
+        if ($path === '/admin/reset') {
+            self::resetPassword($post);
+            return;
+        }
+        if ($path === '/admin/recover') {
+            self::recover($post);
+            return;
+        }
+        if ($path === '/admin/login/2fa') {
+            self::login2fa($post);
+            return;
+        }
 
         self::$user = Auth::gate();
         if ($post) {
@@ -118,6 +134,10 @@ final class Admin
             http_response_code(403);
             self::view('forbidden', [], 'Not allowed');
             return;
+        }
+        if (Settings::get('require_2fa', '0') === '1' && self::$user['role'] === 'admin' && !self::$user['totp_enabled'] && $sec !== 'account') {
+            flash('Admins have to use two-factor login on this site. Set it up here to continue.', 'error');
+            redirect('/admin/account#2fa');
         }
         if ((int)self::$user['must_change'] === 1 && $sec !== 'account') {
             flash('Please choose your own password first.', 'error');
@@ -197,12 +217,90 @@ final class Admin
             csrf_check();
             $email = trim((string)($_POST['email'] ?? ''));
             $r = Auth::attempt($email, (string)($_POST['password'] ?? ''));
+            if ($r === 'mfa') {
+                redirect('/admin/login/2fa');
+            }
             if ($r === true) {
                 redirect('/admin');
             }
             $error = (string)$r;
         }
-        echo tpl('app/views/admin/login', ['error' => $error, 'email' => $email]);
+        echo tpl('app/views/admin/login', ['error' => $error, 'email' => $email, 'flashes' => flashes()]);
+    }
+
+    /* ---------- second step, forgot password, recovery ---------- */
+
+    private static function login2fa(bool $post): void
+    {
+        if (Auth::user()) {
+            redirect('/admin');
+        }
+        if (Auth::pendingMfa() === null) {
+            redirect('/admin/login');
+        }
+        $error = '';
+        if ($post) {
+            csrf_check();
+            $r = Auth::completeMfa((string)($_POST['code'] ?? ''));
+            if ($r === true) {
+                redirect('/admin');
+            }
+            $error = (string)$r;
+            if (Auth::pendingMfa() === null) {
+                flash($error, 'error');
+                redirect('/admin/login');
+            }
+        }
+        echo tpl('app/views/admin/login_2fa', ['error' => $error]);
+    }
+
+    private static function forgot(bool $post): void
+    {
+        if (Auth::user()) {
+            redirect('/admin');
+        }
+        $sent = false;
+        if ($post) {
+            csrf_check();
+            PasswordReset::request((string)($_POST['email'] ?? ''), client_ip());
+            $sent = true;
+        }
+        echo tpl('app/views/admin/forgot', ['sent' => $sent, 'recovery' => Recovery::active()]);
+    }
+
+    private static function resetPassword(bool $post): void
+    {
+        $token = (string)($post ? ($_POST['t'] ?? '') : ($_GET['t'] ?? ''));
+        $bad = 'This link is not valid any more. Ask for a new one on the login page.';
+        $error = '';
+        if ($post) {
+            csrf_check();
+            $new = (string)($_POST['new'] ?? '');
+            $error = $new !== (string)($_POST['again'] ?? '') ? 'The two passwords are not the same.' : (string)PasswordReset::finish($token, $new);
+            if ($error === '') {
+                flash('Your password was changed. You can log in now.');
+                redirect('/admin/login');
+            }
+        }
+        $valid = PasswordReset::find($token) !== null;
+        echo tpl('app/views/admin/reset', ['token' => $valid ? $token : '', 'error' => $valid ? $error : ($error !== '' && $error !== $bad ? $error : $bad)]);
+    }
+
+    private static function recover(bool $post): void
+    {
+        $error = '';
+        if ($post) {
+            csrf_check();
+            $new = (string)($_POST['new'] ?? '');
+            $error = $new !== (string)($_POST['again'] ?? '')
+                ? 'The two passwords are not the same.'
+                : (string)Recovery::run((string)($_POST['phrase'] ?? ''), (string)($_POST['email'] ?? ''), $new, client_ip());
+            if ($error === '') {
+                flash('The password was reset. You can log in now.');
+                redirect('/admin/login');
+            }
+        }
+        echo tpl('app/views/admin/recover', ['active' => Recovery::active(), 'error' => $error]);
     }
 
     /* ---------- login on a phone with a QR code ---------- */
@@ -239,6 +337,9 @@ final class Admin
             $u = Db::row('SELECT * FROM users WHERE id = ?', [$uid]);
             if (!$u || !password_verify((string)($_POST['current'] ?? ''), (string)$u['password_hash'])) {
                 json_out(['ok' => false, 'error' => 'The password is not correct.'], 403);
+            }
+            if (TwoFactor::enabled($u) && !TwoFactor::check($uid, (string)($_POST['code'] ?? ''), false)) {
+                json_out(['ok' => false, 'error' => 'The code from your authenticator app is not correct.'], 403);
             }
             $r = QrLogin::create($uid);
             if ($r === null) {
@@ -1224,6 +1325,20 @@ final class Admin
     {
         $me = (int)self::$user['id'];
 
+        if ($post && $act === 'reset2fa') {
+            $target = (int)($_POST['id'] ?? 0);
+            if ($target !== $me && Users::find($target)) {
+                TwoFactor::disable($target);
+                Notify::event($target, '2fa_reset');
+                flash('Two-factor login was switched off for that user. They can set it up again under Account.');
+            }
+            redirect('/admin/users');
+        }
+        if ($post && $act === 'policy') {
+            Settings::set('require_2fa', !empty($_POST['require_2fa']) ? '1' : '0');
+            flash(!empty($_POST['require_2fa']) ? 'Admins now have to use two-factor login.' : 'Two-factor login is no longer required.');
+            redirect('/admin/users');
+        }
         if ($post && $act === 'delete') {
             $err = Users::delete((int)($_POST['id'] ?? 0), $me);
             flash($err ?? 'User removed. Their posts now belong to you.', $err ? 'error' : 'ok');
@@ -1263,7 +1378,7 @@ final class Admin
         foreach (Db::rows('SELECT author_id, COUNT(*) AS n FROM posts GROUP BY author_id') as $r) {
             $posts[(int)$r['author_id']] = (int)$r['n'];
         }
-        self::view('users', ['users' => Users::all(), 'me' => $me, 'posts' => $posts], 'Users');
+        self::view('users', ['users' => Users::all(), 'me' => $me, 'posts' => $posts, 'require2fa' => Settings::get('require_2fa', '0') === '1'], 'Users');
     }
 
     /* ---------- account ---------- */
@@ -1273,6 +1388,9 @@ final class Admin
         $errors = [];
         $must = (int)self::$user['must_change'] === 1;
         $uid = (int)self::$user['id'];
+        if ($post && in_array((string)($_POST['do'] ?? ''), ['notify', '2fa_start', '2fa_confirm', '2fa_off', '2fa_codes'], true)) {
+            self::twoFactor((string)$_POST['do'], $uid);
+        }
         if ($post && ($_POST['do'] ?? '') === 'qr') {
             $on = !empty($_POST['qr_enabled']);
             Db::update('users', ['qr_enabled' => $on ? 1 : 0], 'id = ?', [$uid]);
@@ -1323,11 +1441,14 @@ final class Admin
                 if ($new !== '') {
                     Auth::revokeOthers($uid);
                     QrLogin::revokeAll($uid);
+                    Notify::event($uid, 'password_changed');
                 }
                 flash($new !== '' ? 'Saved. Your other devices were logged out.' : 'Saved.');
                 redirect('/admin/account');
             }
         }
+        $newCodes = $_SESSION['new_codes'] ?? null;
+        unset($_SESSION['new_codes']);
         self::view('account', [
             'errors' => $errors,
             'email' => $post ? ($_POST['email'] ?? '') : self::$user['email'],
@@ -1337,6 +1458,67 @@ final class Admin
             'qr' => (int)self::$user['qr_enabled'] === 1,
             'qrAvailable' => is_file(RP_ROOT . '/assets/qrcode.js'),
             'sessions' => $must ? [] : Auth::sessionsFor($uid),
+            'twofa' => (int)self::$user['totp_enabled'] === 1,
+            'setup' => isset($_SESSION['totp_pending']) ? [
+                'secret' => (string)$_SESSION['totp_pending'],
+                'uri' => Totp::uri((string)self::$user['email'], (string)(Settings::get('name', '') ?: 'Rider Page'), (string)$_SESSION['totp_pending']),
+            ] : null,
+            'newCodes' => $newCodes,
+            'codesLeft' => TwoFactor::codesLeft($uid),
+            'notify' => (int)self::$user['notify'] === 1,
+            'require2fa' => Settings::get('require_2fa', '0') === '1' && self::$user['role'] === 'admin',
         ], 'Account');
+    }
+
+    /** Account page actions for two-factor login and email preferences. Always ends with a redirect. */
+    private static function twoFactor(string $do, int $uid): never
+    {
+        $back = '/admin/account#2fa';
+        if ($do === 'notify') {
+            Db::update('users', ['notify' => !empty($_POST['notify']) ? 1 : 0], 'id = ?', [$uid]);
+            flash('Saved.');
+            redirect('/admin/account');
+        }
+        $u = Db::row('SELECT * FROM users WHERE id = ?', [$uid]);
+        $pwOk = $u && password_verify((string)($_POST['current'] ?? ''), (string)$u['password_hash']);
+        if ($do === '2fa_confirm') {
+            $secret = (string)($_SESSION['totp_pending'] ?? '');
+            $step = $secret !== '' ? Totp::verify($secret, (string)($_POST['code'] ?? '')) : null;
+            if ($step === null) {
+                flash('The code is not correct. Check that the time on your phone is right and try the next code.', 'error');
+                redirect($back);
+            }
+            $_SESSION['new_codes'] = TwoFactor::enable($uid, $secret, $step);
+            unset($_SESSION['totp_pending']);
+            Notify::event($uid, '2fa_on');
+            flash('Two-factor login is on. Save your recovery codes now.');
+            redirect($back);
+        }
+        if (!$pwOk) {
+            flash('The password is not correct.', 'error');
+            redirect($back);
+        }
+        if ($do === '2fa_start') {
+            $_SESSION['totp_pending'] = Totp::secret();
+            redirect($back);
+        }
+        // Turning off or renewing the codes also needs a current code (an app code or a recovery code).
+        if (!TwoFactor::check($uid, (string)($_POST['code'] ?? ''), true)) {
+            flash('The code is not correct.', 'error');
+            redirect($back);
+        }
+        if ($do === '2fa_off') {
+            if (Settings::get('require_2fa', '0') === '1' && ($u['role'] ?? '') === 'admin') {
+                flash('This site requires two-factor login for admins, so it can not be switched off.', 'error');
+                redirect($back);
+            }
+            TwoFactor::disable($uid);
+            Notify::event($uid, '2fa_off');
+            flash('Two-factor login is off.');
+        } else {
+            $_SESSION['new_codes'] = TwoFactor::newCodes($uid);
+            flash('New recovery codes were made. The old ones no longer work.');
+        }
+        redirect($back);
     }
 }

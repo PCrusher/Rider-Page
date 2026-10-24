@@ -67,6 +67,7 @@ final class Users
                 // A new password ends the user's other logins; the browser that is changing it stays in.
                 $id === (int)($_SESSION['uid'] ?? 0) ? Auth::revokeOthers($id) : Auth::revokeAll($id);
                 QrLogin::revokeAll($id);
+                Notify::event($id, 'password_changed');
             }
             return $id;
         }

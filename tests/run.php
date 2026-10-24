@@ -548,6 +548,113 @@ try {
     Settings::setMany(['notice_on' => '0', 'notice_text' => '']);
     Db::run('DELETE FROM pages');
 
+    echo "Two-factor login, security emails, forgot password\n";
+    $rfc = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+    check(Totp::code($rfc, intdiv(59, 30)) === '287082', 'one-time codes match the RFC 6238 test value at 59 seconds');
+    check(Totp::code($rfc, intdiv(1111111109, 30)) === '081804' && Totp::code($rfc, intdiv(1234567890, 30)) === '005924', 'one-time codes match the other RFC 6238 test values');
+    check(Totp::decode(Totp::encode("hello\x00world")) === "hello\x00world" && preg_match('/^[A-Z2-7]{32}$/', Totp::secret()) === 1, 'base32 round trip and secret format');
+    $now = 1111111109;
+    $stepNow = intdiv($now, 30);
+    check(Totp::verify($rfc, '081804', 0, $now) === $stepNow && Totp::verify($rfc, '081 804', 0, $now) === $stepNow, 'a right code is accepted, also typed with a space');
+    check(Totp::verify($rfc, '081804', $stepNow, $now) === null, 'a code can not be used twice');
+    check(Totp::verify($rfc, '081804', 0, $now + 30) === $stepNow && Totp::verify($rfc, '081804', 0, $now + 90) === null, 'a clock difference of one step is tolerated, more is not');
+    check(Totp::verify($rfc, '12345', 0, $now) === null && Totp::verify($rfc, '000000', 0, $now) === null, 'short and wrong codes are refused');
+    check(str_contains(Totp::uri('me@example.com', 'My Site', $rfc), 'otpauth://totp/My%20Site%3Ame%40example.com?secret=' . $rfc), 'the app address carries the account, issuer and secret');
+
+    $sealed = Crypto::seal('secret value');
+    check(Crypto::open($sealed) === 'secret value' && Crypto::seal('secret value') !== $sealed, 'secrets are encrypted, with a fresh nonce every time');
+    check(Crypto::open(substr($sealed, 0, -4) . 'AAAA') === null && Crypto::open('garbage') === null, 'changed or invalid ciphertext is refused');
+
+    $mails = [];
+    Mailer::$transport = static function (array $m) use (&$mails): array {
+        $mails[] = $m;
+        return [true, ''];
+    };
+    $secret = Totp::secret();
+    $cur = intdiv(time(), 30);
+    $codes = TwoFactor::enable($uid, $secret, Totp::verify($secret, Totp::code($secret, $cur)));
+    check(count($codes) === 10 && preg_match('/^[A-Z2-7]{5}-[A-Z2-7]{5}$/', $codes[0]) === 1 && TwoFactor::enabled(Users::find($uid)), 'switching on gives ten recovery codes');
+    check(!str_contains((string)Db::val('SELECT totp_secret FROM users WHERE id = ?', [$uid]), $secret) && Db::val('SELECT code_hash FROM recovery_codes LIMIT 1') !== str_replace('-', '', $codes[0]), 'secret and recovery codes are not stored in the clear');
+    check(TwoFactor::check($uid, Totp::code($secret, $cur + 1), false), 'a current app code logs in');
+    check(!TwoFactor::check($uid, Totp::code($secret, $cur + 1), false), 'the same app code does not work twice');
+    check(!TwoFactor::check($uid, '123456', true) && !TwoFactor::check($uid, 'AAAAA-AAAAA', true), 'wrong codes are refused');
+    check(!TwoFactor::check($uid, $codes[1], false), 'recovery codes are refused where only app codes are allowed');
+    check(TwoFactor::check($uid, strtolower($codes[0]), true) && !TwoFactor::check($uid, $codes[0], true) && TwoFactor::codesLeft($uid) === 9, 'a recovery code works once, in lower case too');
+    check(count($mails) === 1 && str_contains($mails[0]['subject'], 'recovery code'), 'using a recovery code sends an email');
+    $new = TwoFactor::newCodes($uid);
+    check(count($new) === 10 && !TwoFactor::check($uid, $codes[2], true) && TwoFactor::check($uid, $new[0], true), 'new recovery codes replace the old ones');
+    TwoFactor::disable($uid);
+    check(!TwoFactor::enabled(Users::find($uid)) && TwoFactor::codesLeft($uid) === 0, 'switching off removes the secret and the codes');
+
+    $mails = [];
+    Db::run('DELETE FROM login_devices');
+    $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+    $_SERVER['REMOTE_ADDR'] = '198.51.100.77';
+    Notify::login($uid, 'password');
+    Notify::login($uid, 'password');
+    check(count($mails) === 0 && (int)Db::val('SELECT COUNT(*) FROM login_devices WHERE user_id = ?', [$uid]) === 1, 'the first login and logins from a known device send no email');
+    $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+    Notify::login($uid, 'password');
+    check(count($mails) === 1 && $mails[0]['to'] === 'admin@example.com' && str_contains($mails[0]['subject'], 'new device'), 'a login from a new device sends an email');
+    check(str_contains($mails[0]['body'], 'Safari on iPhone') && str_contains($mails[0]['body'], '198.51.100.77'), 'the email names the device and the IP address');
+    Notify::login($uid, 'qr');
+    check(count($mails) === 2 && str_contains($mails[1]['subject'], 'QR code'), 'a QR login always sends an email');
+    Db::run('UPDATE users SET notify = 0 WHERE id = ?', [$uid]);
+    $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0';
+    Notify::login($uid, 'password');
+    check(count($mails) === 2, 'the new-device email can be switched off');
+    Notify::login($uid, 'qr');
+    Notify::event($uid, 'password_changed');
+    Notify::event($uid, 'nonsense');
+    check(count($mails) === 4 && str_contains($mails[3]['subject'], 'password was changed'), 'QR and security-change emails can not be switched off');
+    Db::run('UPDATE users SET notify = 1 WHERE id = ?', [$uid]);
+
+    $mails = [];
+    PasswordReset::request('nobody@example.com', '198.51.100.1');
+    PasswordReset::request('not an email', '198.51.100.1');
+    check(count($mails) === 0, 'an unknown address gets no email, and nothing is revealed');
+    PasswordReset::request('Admin@Example.com', '198.51.100.1');
+    check(count($mails) === 1 && preg_match('/admin\/reset\?t=([a-f0-9]{64})/', $mails[0]['body'], $tm) === 1, 'a known address gets a link');
+    $tok = $tm[1];
+    check((int)Db::val('SELECT COUNT(*) FROM password_resets WHERE token_hash = ?', [$tok]) === 0 && PasswordReset::find($tok) !== null && PasswordReset::find('abc') === null, 'only a hash of the token is stored');
+    check(str_contains((string)PasswordReset::finish($tok, 'short'), '10 characters') && PasswordReset::find($tok) !== null, 'a too short password does not use up the link');
+    Db::insert('login_sessions', ['user_id' => $uid, 'token_hash' => hash('sha256', 'x1'), 'ip' => '1.1.1.1', 'ua' => 'x', 'method' => 'password', 'created_at' => now(), 'last_seen' => now()]);
+    check(PasswordReset::finish($tok, 'a-brand-new-password') === null, 'the link sets a new password');
+    check(password_verify('a-brand-new-password', (string)Db::val('SELECT password_hash FROM users WHERE id = ?', [$uid])), 'the new password works');
+    check(PasswordReset::find($tok) === null && PasswordReset::finish($tok, 'yet-another-password') !== null, 'a link works only once');
+    check(count(Auth::sessionsFor($uid)) === 0 && count($mails) === 2 && str_contains($mails[1]['subject'], 'reset'), 'all devices are logged out and the user is told');
+    PasswordReset::request('admin@example.com', '198.51.100.2');
+    Db::run('UPDATE password_resets SET created = ?', [time() - 4000]);
+    preg_match('/t=([a-f0-9]{64})/', end($mails)['body'], $tm2);
+    check(PasswordReset::find($tm2[1]) === null, 'a link is dead after 60 minutes');
+    Db::run('DELETE FROM password_resets');
+    $mails = [];
+    for ($i = 0; $i < 6; $i++) {
+        PasswordReset::request('admin@example.com', '198.51.100.3');
+    }
+    check(count($mails) === 3, 'at most three links per hour for one account', (string)count($mails));
+    Db::run('DELETE FROM password_resets');
+
+    $f = $tmp . '/storage/RESET_ADMIN';
+    @unlink($f);
+    check(!Recovery::active(), 'recovery mode is off without the file');
+    file_put_contents($f, 'short');
+    check(!Recovery::active(), 'a phrase shorter than 10 characters does not switch it on');
+    file_put_contents($f, 'correct horse battery');
+    check(Recovery::active() && Recovery::run('wrong phrase here', 'admin@example.com', 'long-enough-password-1', '198.51.100.9') !== null, 'a wrong phrase is refused');
+    check(str_contains((string)Recovery::run('correct horse battery', 'nobody@example.com', 'long-enough-password-1', '198.51.100.9'), 'No account'), 'the phrase must be followed by a real account');
+    TwoFactor::enable($uid, Totp::secret(), 1);
+    $mails = [];
+    check(Recovery::run('correct horse battery', 'Admin@Example.com', 'long-enough-password-1', '198.51.100.9') === null, 'the right phrase resets the password');
+    check(password_verify('long-enough-password-1', (string)Db::val('SELECT password_hash FROM users WHERE id = ?', [$uid])) && !TwoFactor::enabled(Users::find($uid)) && !is_file($f), 'two-factor login is off, the file is deleted');
+    check(count($mails) === 1 && str_contains($mails[0]['subject'], 'reset from the server'), 'the user is told about it');
+    file_put_contents($f, 'correct horse battery');
+    touch($f, time() - 1000);
+    check(!Recovery::active() && !is_file($f), 'an old file is ignored and removed');
+    Mailer::$transport = null;
+    unset($_SERVER['HTTP_USER_AGENT']);
+    $_SERVER['REMOTE_ADDR'] = '203.0.113.50';
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

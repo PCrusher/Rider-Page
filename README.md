@@ -61,7 +61,13 @@ Open `/admin` on your site.
 | Messages, Email | Inbox for the contact form; SMTP settings so messages reach you reliably |
 | Pages, Legal pages | Own pages (about, legal notice, privacy). Guided set-up of the legal pages for your country, as drafts you review and publish |
 | Users | Add people and give them a level: Admin, Editor or Author (admins only) |
-| Account | Change your name, email and password; see and end your logins; show a QR code to log in on your phone |
+| Account | Change your name, email and password; see and end your logins; two-factor login; show a QR code to log in on your phone |
+
+## Forgot your password, lost your phone
+
+- **Password:** on the login page, *Forgot your password?* sends a link to the account's email (needs the email set-up under *Admin -> Email*).
+- **No email, or locked out:** create a file `RESET_ADMIN` in the `storage` folder of your server (FTP or the file manager) and write a secret phrase of at least 10 characters into it. Open `https://your-site/admin/recover` within 15 minutes, enter the phrase, the email address of the account and a new password. The file is deleted afterwards, all logins of that account end and its two-factor login is switched off.
+- **Lost phone with two-factor login:** use one of the recovery codes shown when you set it up, or ask another admin to reset it under *Users*, or use the recovery file above.
 
 ## Updating
 

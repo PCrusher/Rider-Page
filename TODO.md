@@ -39,9 +39,7 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] Custom CSS box for people who want small tweaks without touching code
 - [ ] Support a user theme folder in `storage/` that overrides templates and survives updates
 - [ ] Import and export: all content as one file (move to another host, or backup)
-- [!] Security emails: a mail to the user on every QR login, on every login from a new device, on a password change and when 2FA is switched on or off
-- [!] Forgot password: link by email (single use, 60 minutes, same answer whether the address exists or not), plus an emergency way without email: a file created by FTP opens a 15-minute recovery form
-- [!] Two-factor login (TOTP, authenticator app): set-up with QR code and confirm code, 10 one-time recovery codes, code asked after the password, replay protection, admins can reset 2FA of other users, optional setting "require 2FA for admins"
+- [ ] 2FA: remember a trusted device for 30 days (optional), show recovery codes as a printable page, email reminder when few codes are left
 - [ ] Passkeys (WebAuthn) as a second factor or instead of the password
 - [ ] QR login: optional PIN chosen by the user, a site-wide switch and a switch per role
 - [ ] Account: approximate location for logins (needs an offline IP database), notification email on a login from a new device
@@ -110,3 +108,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.10.0: QR login reversed: the logged-in computer shows the code, the phone logs in
 - 0.11.0: version history and release notes in Updates, side menu with more contrast, menu button for phones
 - 0.12.0: cookie-free visit statistics in the admin, optional cookie notice
+- 0.13.0: two-factor login (TOTP with recovery codes), forgot password with email link and recovery file, security emails

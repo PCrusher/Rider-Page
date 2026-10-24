@@ -34,7 +34,9 @@ final class Auth
                 $u['name'] = (string)($u['name'] ?? '');
                 $u['must_change'] = (int)($u['must_change'] ?? 0);
                 $u['qr_enabled'] = (int)($u['qr_enabled'] ?? 0);
-                unset($u['password_hash']);
+                $u['notify'] = (int)($u['notify'] ?? 1);
+                $u['totp_enabled'] = TwoFactor::enabled($u) ? 1 : 0;
+                unset($u['password_hash'], $u['totp_secret']);
             }
             $cache[$id] = $u;
         }
@@ -50,7 +52,7 @@ final class Auth
         return $u;
     }
 
-    /** @return true|string true on success, otherwise a message for the form */
+    /** @return true|string true on success, 'mfa' when a second step follows, otherwise a message for the form */
     public static function attempt(string $email, string $password): bool|string
     {
         $ip = client_ip();
@@ -69,8 +71,51 @@ final class Auth
         if (password_needs_rehash((string)$row['password_hash'], PASSWORD_DEFAULT)) {
             Db::update('users', ['password_hash' => password_hash($password, PASSWORD_DEFAULT)], 'id = ?', [(int)$row['id']]);
         }
-        self::login((int)$row['id']);
+        $uid = (int)$row['id'];
+        $u = Users::find($uid);
+        if ($u && TwoFactor::enabled($u)) {
+            // The password was right. The account has two-factor login, so a code is needed as well.
+            rp_session();
+            $_SESSION['mfa_uid'] = $uid;
+            $_SESSION['mfa_until'] = time() + 300;
+            $_SESSION['mfa_tries'] = 0;
+            return 'mfa';
+        }
+        self::login($uid);
         return true;
+    }
+
+    /** The user whose password was accepted and who still has to give a code (for five minutes). */
+    public static function pendingMfa(): ?int
+    {
+        rp_session();
+        $uid = (int)($_SESSION['mfa_uid'] ?? 0);
+        return $uid > 0 && (int)($_SESSION['mfa_until'] ?? 0) > time() ? $uid : null;
+    }
+
+    /** @return true|string true when the code was right and the user is logged in */
+    public static function completeMfa(string $code): bool|string
+    {
+        $uid = self::pendingMfa();
+        if ($uid === null) {
+            return 'Your login took too long. Please start again.';
+        }
+        $ip = client_ip();
+        if ((int)Db::val('SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND ts >= ?', [$ip, time() - self::WINDOW]) >= self::MAX_FAILS) {
+            return 'Too many failed attempts. Please wait 15 minutes and try again.';
+        }
+        if (TwoFactor::check($uid, $code, true)) {
+            unset($_SESSION['mfa_uid'], $_SESSION['mfa_until'], $_SESSION['mfa_tries']);
+            self::login($uid);
+            return true;
+        }
+        Db::insert('login_attempts', ['ip' => $ip, 'ts' => time()]);
+        $_SESSION['mfa_tries'] = (int)($_SESSION['mfa_tries'] ?? 0) + 1;
+        if ($_SESSION['mfa_tries'] >= 5) {
+            unset($_SESSION['mfa_uid'], $_SESSION['mfa_until'], $_SESSION['mfa_tries']);
+            return 'Too many wrong codes. Please log in again.';
+        }
+        return 'The code is not correct. Try again.';
     }
 
     public static function login(int $id, string $method = 'password'): void
@@ -79,6 +124,7 @@ final class Auth
         session_regenerate_id(true);
         $_SESSION['uid'] = $id;
         self::record($id, $method);
+        Notify::login($id, $method);
     }
 
     public static function logout(): void

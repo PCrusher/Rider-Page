@@ -33,7 +33,7 @@ register_shutdown_function(static function (): void {
     }
 });
 
-foreach (['helpers', 'Db', 'Settings', 'Migrator', 'Auth', 'QrLogin', 'Roles', 'Users', 'Images', 'Markdown', 'Lang', 'Presets', 'Redirects', 'Analytics', 'Changelog', 'Legal', 'Mailer', 'Contact', 'Site', 'Admin', 'Installer', 'Seed', 'Updater'] as $__f) {
+foreach (['helpers', 'Db', 'Settings', 'Migrator', 'Crypto', 'Totp', 'TwoFactor', 'Notify', 'PasswordReset', 'Recovery', 'Auth', 'QrLogin', 'Roles', 'Users', 'Images', 'Markdown', 'Lang', 'Presets', 'Redirects', 'Analytics', 'Changelog', 'Legal', 'Mailer', 'Contact', 'Site', 'Admin', 'Installer', 'Seed', 'Updater'] as $__f) {
     require_once RP_APP . '/' . $__f . '.php';
 }
 unset($__f);

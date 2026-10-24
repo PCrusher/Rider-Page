@@ -3,6 +3,16 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.13.0
+
+- **Two-factor login.** Under *Account* you can set up an authenticator app (Google Authenticator, Microsoft Authenticator, Aegis, 1Password and others): scan the QR code, confirm with a code, and save ten one-time recovery codes. After that, the login asks for a code after the password. A code works once, and wrong codes are limited. Switching it off or making new recovery codes needs the password and a code. The secret is stored encrypted with a key that is not in the database.
+- **Require it for admins** (*Users -> Two-factor login*): admins without two-factor login are taken to the Account page until it is set up. Admins can switch off the two-factor login of another user who lost their phone and codes.
+- **QR login with two-factor on:** showing a QR code then also asks for a current app code.
+- **Forgot password.** The login page links to a form. It sends a link by email that works once for 60 minutes. The answer is the same for known and unknown addresses, and requests are limited. After the change all devices are logged out; with two-factor on, the code is still needed.
+- **Emergency recovery without email.** Create the file `storage/RESET_ADMIN` on the server (for example by FTP) with a secret phrase of at least 10 characters. For 15 minutes, `/admin/recover` accepts that phrase, an account email and a new password. The file is deleted afterwards and two-factor login of that account is switched off.
+- **Security emails.** You get an email when someone logs in with a QR code, from a new device (can be switched off under *Account*), and when your password or two-factor login changes or a recovery code is used. Needs a working email set-up under *Admin -> Email*.
+- Adds the columns `totp_secret`, `totp_enabled`, `totp_step`, `notify` to `users` and the tables `recovery_codes`, `login_devices` and `password_resets`. Existing logins stay valid.
+
 ## 0.12.0
 
 - **Statistics** (*Admin -> Statistics*, for admins and editors): page views and visitors per day as a chart for 7, 30 or 90 days, top pages and posts, where visitors came from, devices and browsers, and clicks on partner links, social accounts and the video. CSV download for each table.
