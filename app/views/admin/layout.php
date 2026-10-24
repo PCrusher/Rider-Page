@@ -1,22 +1,26 @@
 <?php
 /** Variables: $content $title $section $flashes $user $version $entities */
+$role = (string)$user['role'];
 $items = [
-    ['', 'Dashboard', '/admin', null],
+    ['', 'Dashboard', '/admin', ''],
     ['profile', 'Profile', '/admin/profile', 'Content'],
-    ['socials', 'Social accounts', '/admin/socials', null],
-    ['stats', 'Results', '/admin/stats', null],
-    ['sponsors', 'Partners', '/admin/sponsors', null],
-    ['media', 'Photos', '/admin/media', null],
-    ['posts', 'Blog', '/admin/posts', null],
-    ['faqs', 'FAQ', '/admin/faqs', null],
+    ['socials', 'Social accounts', '/admin/socials', 'Content'],
+    ['stats', 'Results', '/admin/stats', 'Content'],
+    ['sponsors', 'Partners', '/admin/sponsors', 'Content'],
+    ['media', 'Photos', '/admin/media', 'Content'],
+    ['posts', 'Blog', '/admin/posts', 'Content'],
+    ['faqs', 'FAQ', '/admin/faqs', 'Content'],
     ['sections', 'Sections', '/admin/sections', 'Page'],
-    ['appearance', 'Appearance', '/admin/appearance', null],
-    ['maintenance', 'Maintenance', '/admin/maintenance', null],
-    ['errorpage', '404 page', '/admin/errorpage', null],
-    ['redirects', 'Redirects', '/admin/redirects', null],
+    ['appearance', 'Appearance', '/admin/appearance', 'Page'],
+    ['maintenance', 'Maintenance', '/admin/maintenance', 'Page'],
+    ['errorpage', '404 page', '/admin/errorpage', 'Page'],
+    ['redirects', 'Redirects', '/admin/redirects', 'Page'],
+    ['users', 'Users', '/admin/users', 'System'],
     ['update', 'Updates', '/admin/update', 'System'],
-    ['account', 'Account', '/admin/account', null],
+    ['account', 'Account', '/admin/account', 'System'],
 ];
+$items = array_values(array_filter($items, static fn($i) => Roles::can($role, $i[0])));
+$lastGroup = '';
 ?>
 <!doctype html>
 <html lang="en">
@@ -33,13 +37,14 @@ $items = [
   <aside class="side">
     <div class="brand">Rider Page</div>
     <?php foreach ($items as [$key, $label, $href, $group]): ?>
-      <?php if ($group): ?><div class="grp"><?= e($group) ?></div><?php endif; ?>
+      <?php if ($group !== '' && $group !== $lastGroup): $lastGroup = $group; ?><div class="grp"><?= e($group) ?></div><?php endif; ?>
       <a class="nav" href="<?= e(url($href)) ?>"<?= $section === $key ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
     <?php endforeach; ?>
     <div class="foot">
       <a class="nav" href="<?= e(url('/')) ?>" target="_blank" rel="noopener">View site ↗</a>
       <form method="post" action="<?= e(url('/admin/logout')) ?>"><?= csrf_field() ?><button class="nav" type="submit">Log out</button></form>
-      <div class="muted small" style="padding:8px 10px">Version <?= e($version) ?></div>
+      <div class="muted small" style="padding:8px 10px 0"><?= e(Users::label($user)) ?> &middot; <?= e(Roles::ALL[$role] ?? '') ?></div>
+      <div class="muted small" style="padding:0 10px 8px">Version <?= e($version) ?></div>
     </div>
   </aside>
   <main class="main">

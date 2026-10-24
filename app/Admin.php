@@ -106,6 +106,16 @@ final class Admin
         self::$section = $sec;
         $ents = self::entities();
 
+        if (!Roles::can((string)self::$user['role'], $sec)) {
+            http_response_code(403);
+            self::view('forbidden', [], 'Not allowed');
+            return;
+        }
+        if ((int)self::$user['must_change'] === 1 && $sec !== 'account') {
+            flash('Please choose your own password first.', 'error');
+            redirect('/admin/account');
+        }
+
         if ($sec === '') {
             self::dashboard();
         } elseif ($sec === 'profile') {
@@ -126,6 +136,8 @@ final class Admin
             self::redirects($act, $post);
         } elseif ($sec === 'update') {
             self::update($act, $post);
+        } elseif ($sec === 'users') {
+            self::users($act, $post);
         } elseif ($sec === 'account') {
             self::account($post);
         } elseif ($sec === 'upload' && $post) {
@@ -175,6 +187,15 @@ final class Admin
 
     private static function dashboard(): void
     {
+        $uid = (int)self::$user['id'];
+        if (self::$user['role'] === 'author') {
+            $counts = ['draft' => 0, 'pending' => 0, 'published' => 0];
+            foreach (Db::rows('SELECT status, COUNT(*) AS n FROM posts WHERE author_id = ? GROUP BY status', [$uid]) as $r) {
+                $counts[$r['status']] = (int)$r['n'];
+            }
+            self::view('dashboard_author', ['counts' => $counts, 'name' => Users::label(self::$user)], 'Dashboard');
+            return;
+        }
         $s = static fn(string $k): string => trim((string)Settings::get($k, ''));
         $count = static fn(string $t): int => (int)Db::val('SELECT COUNT(*) FROM ' . $t);
         $steps = [
@@ -196,6 +217,7 @@ final class Admin
             'hidden' => $hidden,
             'maintenance' => Site::maintenanceOn(),
             'notFound' => self::notFoundCount(),
+            'pending' => (int)Db::val("SELECT COUNT(*) FROM posts WHERE status = 'pending'"),
             'update' => Updater::cached(),
         ], 'Dashboard');
     }
@@ -408,28 +430,45 @@ final class Admin
 
     private static function posts(string $act, bool $post): void
     {
+        $u = self::$user;
+        $role = (string)$u['role'];
+        $staff = Roles::isStaff($role);
+
         if ($act === '' && !$post) {
-            $rows = Db::rows('SELECT id, slug, title, status, published_at FROM posts ORDER BY published_at DESC, id DESC');
-            self::view('posts', ['rows' => $rows], 'Blog');
+            $sql = 'SELECT p.id, p.slug, p.title, p.status, p.published_at, p.author_id, u.email AS author_email, u.name AS author_name '
+                . 'FROM posts p LEFT JOIN users u ON u.id = p.author_id';
+            $params = [];
+            if (!$staff) {
+                $sql .= ' WHERE p.author_id = ?';
+                $params[] = (int)$u['id'];
+            }
+            $rows = Db::rows($sql . ' ORDER BY p.published_at DESC, p.id DESC', $params);
+            foreach ($rows as &$r) {
+                $r['can_edit'] = Roles::canEditPost($u, $r);
+            }
+            unset($r);
+            self::view('posts', ['rows' => $rows, 'staff' => $staff], 'Blog');
             return;
         }
         if ($act === 'edit' && !$post) {
             $id = (int)($_GET['id'] ?? 0);
             $row = $id ? Db::row('SELECT * FROM posts WHERE id = ?', [$id]) : null;
-            if ($id && !$row) {
+            if ($id && (!$row || !Roles::canEditPost($u, $row))) {
+                flash('You can not edit this post.', 'error');
                 redirect('/admin/posts');
             }
-            $row ??= ['title' => '', 'slug' => '', 'summary' => '', 'cover' => '', 'body' => '', 'status' => 'draft', 'published_at' => now()];
-            self::view('post_edit', ['row' => $row, 'id' => $id, 'errors' => []], $id ? 'Edit post' : 'New post');
+            $row ??= ['title' => '', 'slug' => '', 'summary' => '', 'cover' => '', 'body' => '', 'status' => 'draft', 'published_at' => now(), 'author_id' => (int)$u['id']];
+            self::postForm($row, $id, []);
             return;
         }
         if ($act === 'save' && $post) {
             $id = (int)($_POST['id'] ?? 0);
             $old = $id ? Db::row('SELECT * FROM posts WHERE id = ?', [$id]) : null;
-            if ($id && !$old) {
+            if ($id && (!$old || !Roles::canEditPost($u, $old))) {
+                flash('You can not edit this post.', 'error');
                 redirect('/admin/posts');
             }
-            $old ??= ['cover' => ''];
+            $old ??= ['cover' => '', 'status' => 'draft', 'author_id' => (int)$u['id'], 'published_at' => now()];
             $errors = [];
             $title = trim((string)($_POST['title'] ?? ''));
             if ($title === '') {
@@ -441,13 +480,18 @@ final class Admin
             while (Db::val('SELECT COUNT(*) FROM posts WHERE slug = ? AND id <> ?', [$slug, $id]) > 0) {
                 $slug = $base . '-' . $n++;
             }
-            $ts = strtotime(str_replace('T', ' ', (string)($_POST['published_at'] ?? '')));
+            $status = (string)($_POST['status'] ?? 'draft');
+            if (!array_key_exists($status, Roles::postStatuses($role))) {
+                $status = $role === 'author' ? 'draft' : (string)$old['status'];
+            }
+            // Only staff pick the date; an author's post gets the date it is written.
+            $ts = $staff ? strtotime(str_replace('T', ' ', (string)($_POST['published_at'] ?? ''))) : strtotime((string)$old['published_at']);
             $data = [
                 'title' => $title,
                 'slug' => $slug,
                 'summary' => mb_substr(trim((string)($_POST['summary'] ?? '')), 0, 500),
                 'body' => str_replace("\r\n", "\n", (string)($_POST['body'] ?? '')),
-                'status' => ($_POST['status'] ?? '') === 'published' ? 'published' : 'draft',
+                'status' => $status,
                 'published_at' => date('Y-m-d H:i:s', $ts ?: time()),
                 'updated_at' => now(),
             ];
@@ -456,32 +500,48 @@ final class Admin
             $data['cover'] = $img['cover'];
             if ($errors) {
                 self::cleanupNew([['cover', 'Cover image', 'image']], $img, $old);
-                self::view('post_edit', ['row' => $data + ['cover' => $old['cover']], 'id' => $id, 'errors' => $errors], $id ? 'Edit post' : 'New post');
+                self::postForm($data + ['cover' => $old['cover'], 'author_id' => $old['author_id']], $id, $errors);
                 return;
             }
             if ($id) {
                 Db::update('posts', $data, 'id = ?', [$id]);
             } else {
                 $data['created_at'] = now();
+                $data['author_id'] = (int)$u['id'];
                 Db::insert('posts', $data);
             }
             foreach ($remove as $r) {
                 delete_upload($r);
             }
-            flash($data['status'] === 'published' ? 'Saved and published.' : 'Saved as draft.');
+            flash(match ($status) {
+                'published' => 'Saved and published.',
+                'pending' => $staff ? 'Saved, waiting for review.' : 'Submitted. An editor will review it.',
+                default => 'Saved as draft.',
+            });
             redirect('/admin/posts');
         }
         if ($act === 'delete' && $post) {
             $id = (int)($_POST['id'] ?? 0);
-            $row = Db::row('SELECT cover FROM posts WHERE id = ?', [$id]);
-            if ($row) {
+            $row = Db::row('SELECT * FROM posts WHERE id = ?', [$id]);
+            if ($row && Roles::canEditPost($u, $row)) {
                 delete_upload((string)$row['cover']);
                 Db::delete('posts', 'id = ?', [$id]);
                 flash('Deleted.');
+            } else {
+                flash('You can not delete this post.', 'error');
             }
             redirect('/admin/posts');
         }
         redirect('/admin/posts');
+    }
+
+    private static function postForm(array $row, int $id, array $errors): void
+    {
+        $role = (string)self::$user['role'];
+        self::view('post_edit', [
+            'row' => $row, 'id' => $id, 'errors' => $errors,
+            'statuses' => Roles::postStatuses($role), 'canDate' => Roles::isStaff($role),
+        ], $id ? 'Edit post' : 'New post');
     }
 
     private static function upload(): void
@@ -715,14 +775,64 @@ final class Admin
         ], 'Updates');
     }
 
+    /* ---------- users ---------- */
+
+    private static function users(string $act, bool $post): void
+    {
+        $me = (int)self::$user['id'];
+
+        if ($post && $act === 'delete') {
+            $err = Users::delete((int)($_POST['id'] ?? 0), $me);
+            flash($err ?? 'User removed. Their posts now belong to you.', $err ? 'error' : 'ok');
+            redirect('/admin/users');
+        }
+        if ($act === 'edit' || ($post && $act === 'save')) {
+            $id = (int)($post ? ($_POST['id'] ?? 0) : ($_GET['id'] ?? 0));
+            $current = $id ? Users::find($id) : null;
+            if ($id && !$current) {
+                redirect('/admin/users');
+            }
+            $errors = [];
+            $form = $current ?? ['email' => '', 'name' => '', 'role' => 'editor', 'must_change' => 1];
+            if ($post) {
+                $in = [
+                    'email' => trim((string)($_POST['email'] ?? '')),
+                    'name' => trim((string)($_POST['name'] ?? '')),
+                    'role' => (string)($_POST['role'] ?? ''),
+                    'password' => (string)($_POST['password'] ?? ''),
+                    'must_change' => !empty($_POST['must_change']),
+                ];
+                $errors = Users::validate($in, $id);
+                if ($id === $me && $in['role'] !== 'admin') {
+                    $errors[] = 'You can not take away your own admin rights. Ask another admin to do it.';
+                }
+                if (!$errors) {
+                    Users::save($in, $id);
+                    flash($id ? 'Saved.' : 'User added. Give them the address of this site, their email and the first password.');
+                    redirect('/admin/users');
+                }
+                $form = ['email' => $in['email'], 'name' => $in['name'], 'role' => $in['role'], 'must_change' => $in['must_change'] ? 1 : 0];
+            }
+            self::view('user_form', ['id' => $id, 'form' => $form, 'errors' => $errors, 'self' => $id === $me], $id ? 'Edit user' : 'Add user');
+            return;
+        }
+        $posts = [];
+        foreach (Db::rows('SELECT author_id, COUNT(*) AS n FROM posts GROUP BY author_id') as $r) {
+            $posts[(int)$r['author_id']] = (int)$r['n'];
+        }
+        self::view('users', ['users' => Users::all(), 'me' => $me, 'posts' => $posts], 'Users');
+    }
+
     /* ---------- account ---------- */
 
     private static function account(bool $post): void
     {
         $errors = [];
+        $must = (int)self::$user['must_change'] === 1;
         if ($post) {
             $u = Db::row('SELECT * FROM users WHERE id = ?', [(int)self::$user['id']]);
             $email = strtolower(trim((string)($_POST['email'] ?? '')));
+            $name = mb_substr(trim((string)($_POST['name'] ?? '')), 0, 190);
             $current = (string)($_POST['current'] ?? '');
             $new = (string)($_POST['new'] ?? '');
             if (!$u || !password_verify($current, (string)$u['password_hash'])) {
@@ -734,19 +844,29 @@ final class Admin
             if ($new !== '' && strlen($new) < 10) {
                 $errors[] = 'The new password needs at least 10 characters.';
             }
+            if ($must && $new === '') {
+                $errors[] = 'Please choose a new password of your own.';
+            }
             if (!$errors && Db::val('SELECT COUNT(*) FROM users WHERE email = ? AND id <> ?', [$email, (int)$u['id']]) > 0) {
                 $errors[] = 'This email address is already used.';
             }
             if (!$errors) {
-                $data = ['email' => $email];
+                $data = ['email' => $email, 'name' => $name];
                 if ($new !== '') {
                     $data['password_hash'] = password_hash($new, PASSWORD_DEFAULT);
+                    $data['must_change'] = 0;
                 }
                 Db::update('users', $data, 'id = ?', [(int)$u['id']]);
                 flash('Saved.');
                 redirect('/admin/account');
             }
         }
-        self::view('account', ['errors' => $errors, 'email' => $post ? ($_POST['email'] ?? '') : self::$user['email']], 'Account');
+        self::view('account', [
+            'errors' => $errors,
+            'email' => $post ? ($_POST['email'] ?? '') : self::$user['email'],
+            'name' => $post ? ($_POST['name'] ?? '') : self::$user['name'],
+            'must' => $must,
+            'role' => Roles::ALL[self::$user['role']] ?? '',
+        ], 'Account');
     }
 }

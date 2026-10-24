@@ -1,4 +1,4 @@
-<?php /** Variables: $row $id $errors */ ?>
+<?php /** Variables: $row $id $errors $statuses $canDate */ ?>
 <h1><?= $id ? 'Edit post' : 'New post' ?></h1>
 <?php if ($errors): ?><div class="box bad"><ul><?php foreach ($errors as $err): ?><li><?= e($err) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 <form method="post" action="<?= e(url('/admin/posts/save')) ?>" enctype="multipart/form-data" class="box" data-upload="<?= e(url('/admin/upload')) ?>">
@@ -36,15 +36,18 @@
     <div>
       <label class="f" for="status">Status</label>
       <select id="status" name="status">
-        <option value="draft"<?= $row['status'] !== 'published' ? ' selected' : '' ?>>Draft (not public)</option>
-        <option value="published"<?= $row['status'] === 'published' ? ' selected' : '' ?>>Published</option>
+        <?php foreach ($statuses as $sv => $sl): ?>
+          <option value="<?= e($sv) ?>"<?= (string)$row['status'] === $sv ? ' selected' : '' ?>><?= e($sl) ?></option>
+        <?php endforeach; ?>
       </select>
     </div>
+    <?php if ($canDate): ?>
     <div>
       <label class="f" for="published_at">Date</label>
       <input type="datetime-local" id="published_at" name="published_at" value="<?= e(date('Y-m-d\TH:i', (int)strtotime((string)$row['published_at']))) ?>">
-      <p class="hint">A future date keeps the post hidden until then.</p>
+      <p class="hint">A future date keeps a published post hidden until then.</p>
     </div>
+    <?php endif; ?>
   </div>
 
   <label class="f" for="slug">Web address</label>

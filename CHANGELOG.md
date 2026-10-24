@@ -3,6 +3,14 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.4.0
+
+- User levels: **Admin** (everything), **Editor** (content, blog, redirects, 404 page; publishes posts), **Author** (writes own posts, which go live after approval). New *Admin -> Users* page to add, change and remove people.
+- Blog posts now have a status "Waiting for review". Authors see only their own posts and can change them until they are published.
+- A user can be made to choose their own password at the first login.
+- Safety rules: at least one admin must always remain; you can not delete yourself or lower your own level.
+- Adds columns to `users` (`role`, `name`, `must_change`) and `posts` (`author_id`). Existing users stay admins.
+
 ## 0.3.0
 
 - Editable 404 page: own heading and message, optionally with the latest blog posts. *Admin -> 404 page*.

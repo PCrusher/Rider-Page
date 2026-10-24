@@ -178,6 +178,57 @@ try {
     Settings::set('maintenance', '');
     check(Site::response('/')['status'] === 200, 'site is back when maintenance is off');
 
+    echo "Users and roles\n";
+    check(Users::find($uid)['role'] === 'admin', 'installer admin has the admin level');
+    check(Roles::can('admin', 'update') && Roles::can('admin', 'users') && Roles::can('admin', 'appearance'), 'admin can open everything');
+    check(!Roles::can('editor', 'update') && !Roles::can('editor', 'users') && !Roles::can('editor', 'maintenance') && !Roles::can('editor', 'appearance'), 'editor can not open system pages');
+    check(Roles::can('editor', 'posts') && Roles::can('editor', 'profile') && Roles::can('editor', 'redirects') && Roles::can('editor', 'errorpage'), 'editor can edit content');
+    check(Roles::can('author', 'posts') && Roles::can('author', 'account') && Roles::can('author', 'upload'), 'author can write posts');
+    check(!Roles::can('author', 'profile') && !Roles::can('author', 'media') && !Roles::can('author', 'redirects') && !Roles::can('author', 'sections'), 'author can not edit the rest');
+    check(!Roles::can('editor', 'some-future-area'), 'areas not listed are admin only');
+    check(!Roles::can('guest', '') && !Roles::valid('guest'), 'unknown level has no access');
+    check(array_keys(Roles::postStatuses('author')) === ['draft', 'pending'], 'authors can not publish');
+    check(array_key_exists('published', Roles::postStatuses('editor')), 'editors can publish');
+
+    $ok = ['email' => 'new@example.com', 'name' => '', 'role' => 'editor', 'password' => 'a-long-test-password'];
+    check(Users::validate($ok, 0) === [], 'valid new user passes');
+    check(Users::validate(['email' => 'admin@example.com'] + $ok, 0) !== [], 'duplicate email is refused');
+    check(Users::validate(['password' => 'short'] + $ok, 0) !== [], 'short password is refused');
+    check(Users::validate(['password' => ''] + $ok, 0) !== [], 'a new user needs a first password');
+    check(Users::validate(['role' => 'boss'] + $ok, 0) !== [], 'unknown level is refused');
+    check(Users::validate(['email' => 'admin@example.com', 'role' => 'author', 'password' => ''] + $ok, $uid) !== [], 'the last admin can not be demoted');
+
+    $eid = Users::save(['email' => 'Editor@Example.com', 'name' => 'Eva', 'role' => 'editor', 'must_change' => true] + $ok, 0);
+    $aid = Users::save(['email' => 'author@example.com', 'name' => '', 'role' => 'author', 'must_change' => false] + $ok, 0);
+    $ed = Users::find($eid);
+    check($ed['email'] === 'editor@example.com' && $ed['role'] === 'editor' && (int)$ed['must_change'] === 1, 'user is saved with lower-case email, level and flag');
+    check(password_verify('a-long-test-password', (string)$ed['password_hash']) && $ed['password_hash'] !== 'a-long-test-password', 'password is stored hashed');
+    Users::save(['email' => 'editor@example.com', 'name' => 'Eva K', 'role' => 'editor', 'password' => '', 'must_change' => false], $eid);
+    $ed = Users::find($eid);
+    check($ed['name'] === 'Eva K' && (int)$ed['must_change'] === 0 && password_verify('a-long-test-password', (string)$ed['password_hash']), 'empty password field keeps the old password');
+    check(Users::label($ed) === 'Eva K' && Users::label(Users::find($aid)) === 'author@example.com', 'label uses name or email');
+
+    $a2 = Users::save(['email' => 'admin2@example.com', 'role' => 'admin', 'must_change' => false] + $ok, 0);
+    check(Users::validate(['email' => 'admin@example.com', 'role' => 'editor', 'password' => ''] + $ok, $uid) === [], 'an admin can be demoted when another admin exists');
+    check(Users::delete($uid, $uid) !== null, 'you can not delete yourself');
+    check(Users::delete($a2, $uid) === null && Users::find($a2) === null, 'another admin can be removed');
+    check(Users::delete($uid, $eid) !== null, 'the last admin can not be removed');
+
+    $draft = ['id' => 1, 'author_id' => $aid, 'status' => 'draft'];
+    $live = ['id' => 2, 'author_id' => $aid, 'status' => 'published'];
+    $me = ['id' => $aid, 'role' => 'author'];
+    check(Roles::canEditPost($me, $draft) && Roles::canEditPost($me, ['status' => 'pending'] + $draft), 'author edits own draft and pending posts');
+    check(!Roles::canEditPost($me, $live), 'author can not edit a published post');
+    check(!Roles::canEditPost(['id' => $aid + 99, 'role' => 'author'], $draft), 'author can not edit someone else\'s post');
+    check(Roles::canEditPost(['id' => $eid, 'role' => 'editor'], $live) && Roles::canEditPost(['id' => $uid, 'role' => 'admin'], $draft), 'staff edit any post');
+
+    Db::insert('posts', ['slug' => 'by-author', 'title' => 'By author', 'summary' => '', 'cover' => '', 'body' => 'x', 'status' => 'pending',
+        'published_at' => now(), 'created_at' => now(), 'updated_at' => now(), 'author_id' => $aid]);
+    check(Site::response('/blog/by-author')['status'] === 404, 'a post waiting for review is not public');
+    check(Users::delete($aid, $uid) === null && (int)Db::val("SELECT author_id FROM posts WHERE slug = 'by-author'") === $uid, 'removing a user hands their posts to you');
+    Db::run("DELETE FROM posts WHERE slug = 'by-author'");
+    Db::run("DELETE FROM not_found");
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

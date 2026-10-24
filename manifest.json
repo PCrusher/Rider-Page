@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: editable 404 page, redirects from old addresses, and a list of addresses that were not found. Adds two small database tables.",
+  "changelog": "New: user levels (admin, editor, author) with a Users page. Authors write posts that an editor approves. Adds columns to the users and posts tables; existing users stay admins.",
   "warnings": []
 }

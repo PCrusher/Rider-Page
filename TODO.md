@@ -33,8 +33,9 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] Support a user theme folder in `storage/` that overrides templates and survives updates
 - [ ] Import and export: all content as one file (move to another host, or backup)
 - [ ] Two-factor login for the admin
-- [ ] User levels: Admin (everything), Editor (content, blog, photos; no updates, maintenance, appearance or accounts), Author (own blog posts only, drafts need approval)
-- [ ] More than one user, invite by email, user list in the admin
+- [ ] Invite users by email with a link to set their own password (needs mail sending)
+- [ ] Users: password reset by email, "last login" column, activity log
+- [ ] Per-author profile and byline on blog posts
 - [ ] 404 page: suggest the closest matching post or section; separate 404 text per language
 - [ ] Redirects: import and export as CSV, wildcard rules (for example a whole old folder)
 
@@ -75,3 +76,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.1.1: readable message for old PHP versions, fatal errors logged to `storage/logs/php-errors.log`
 - 0.2.0: maintenance mode in the admin
 - 0.3.0: editable 404 page, redirects, list of addresses that were not found
+- 0.4.0: user levels (admin, editor, author), Users page, post approval

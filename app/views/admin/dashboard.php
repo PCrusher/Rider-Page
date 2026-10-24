@@ -1,4 +1,4 @@
-<?php /** Variables: $steps $hidden $update $maintenance $notFound */ ?>
+<?php /** Variables: $steps $hidden $update $maintenance $notFound $pending */ ?>
 <h1>Dashboard</h1>
 <p class="muted">Welcome back. Here is where your page stands.</p>
 
@@ -6,6 +6,13 @@
   <div class="box bad">
     <b>Maintenance mode is on.</b> Visitors see a maintenance page instead of your site.
     <a href="<?= e(url('/admin/maintenance')) ?>">Turn it off</a>
+  </div>
+<?php endif; ?>
+
+<?php if ($pending > 0): ?>
+  <div class="box warn">
+    <b><?= (int)$pending ?> blog post<?= $pending === 1 ? ' is' : 's are' ?> waiting for review.</b>
+    <a href="<?= e(url('/admin/posts')) ?>">Open the blog list</a>
   </div>
 <?php endif; ?>
 

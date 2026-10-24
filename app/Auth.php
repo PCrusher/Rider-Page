@@ -14,7 +14,19 @@ final class Auth
             return null;
         }
         static $cache = [];
-        return $cache[$id] ??= Db::row('SELECT id, email FROM users WHERE id = ?', [(int)$id]);
+        if (!isset($cache[$id])) {
+            // SELECT * on purpose: right after an update this runs before the new columns exist,
+            // so missing fields fall back to the old behaviour (a full admin).
+            $u = Db::row('SELECT * FROM users WHERE id = ?', [(int)$id]);
+            if ($u) {
+                $u['role'] = Roles::valid((string)($u['role'] ?? '')) ? $u['role'] : 'admin';
+                $u['name'] = (string)($u['name'] ?? '');
+                $u['must_change'] = (int)($u['must_change'] ?? 0);
+                unset($u['password_hash']);
+            }
+            $cache[$id] = $u;
+        }
+        return $cache[$id];
     }
 
     public static function gate(): array

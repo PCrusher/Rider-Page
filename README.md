@@ -44,6 +44,8 @@ location ~ \.php$ { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $docum
 
 Open `/admin` on your site.
 
+**User levels:** *Admin* can do everything. *Editor* manages content, the blog, redirects and the 404 page and can publish posts, but cannot change the design, run updates, use maintenance mode or manage users. *Author* writes their own blog posts; a post goes live after an editor or admin approves it.
+
 | Page | What it does |
 | --- | --- |
 | Profile | Name, introduction, photo, badge, contact email, YouTube video, search description, language |
@@ -54,7 +56,8 @@ Open `/admin` on your site.
 | 404 page, Redirects | Edit the page for unknown addresses; redirect old addresses to new ones; see which addresses were not found |
 | Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |
 | Updates | Check for and install new versions |
-| Account | Change email and password |
+| Users | Add people and give them a level: Admin, Editor or Author (admins only) |
+| Account | Change your name, email and password |
 
 ## Updating
 
@@ -113,6 +116,7 @@ php -S localhost:8000    # local preview (storage/ and uploads/ must be writable
 - **Settings have defaults in code,** so an old site without the new setting keeps working.
 - **New features start switched off or hidden** until the owner has content for them.
 - **Customisations live outside the replaced folders** (`storage/`, `uploads/`, the database).
+- **Code that runs right after an update must not need new columns.** The update's last step (`/admin/update/finish`) runs with the new code before the database changes are applied, so login and the update page must work with the old schema (see `Auth::user()`).
 - **Breaking changes need a major version,** `"breaking": true` in the manifest and a clear note.
 
 ### Layout
