@@ -3,6 +3,11 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.1.1
+
+- A server with PHP older than 8.1 now shows a readable message instead of a blank 500 page.
+- Fatal PHP errors are logged to `storage/logs/php-errors.log` and show a short notice.
+
 ## 0.1.0
 
 First release.

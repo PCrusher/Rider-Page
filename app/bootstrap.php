@@ -13,6 +13,25 @@ define('RP_UPLOADS', RP_ROOT . '/uploads');
 
 ini_set('display_errors', '0');
 ini_set('memory_limit', '256M');
+ini_set('log_errors', '1');
+@mkdir(RP_STORAGE . '/logs', 0755, true);
+ini_set('error_log', RP_STORAGE . '/logs/php-errors.log');
+
+// Fatal errors (for example a missing PHP extension) would otherwise end in a blank page.
+register_shutdown_function(static function (): void {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) {
+        if (!headers_sent()) {
+            http_response_code(500);
+            header('Content-Type: text/html; charset=utf-8');
+        }
+        echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            . '<title>Something went wrong</title>'
+            . '<body style="font:16px/1.5 system-ui,sans-serif;max-width:36rem;margin:15vh auto;padding:0 1rem">'
+            . '<h1 style="font-size:1.4rem">Something went wrong</h1>'
+            . '<p>The page could not be shown. The details are in <code>storage/logs/php-errors.log</code>.</p></body>';
+    }
+});
 
 foreach (['helpers', 'Db', 'Settings', 'Migrator', 'Auth', 'Images', 'Markdown', 'Lang', 'Presets', 'Site', 'Admin', 'Installer', 'Seed', 'Updater'] as $__f) {
     require_once RP_APP . '/' . $__f . '.php';
