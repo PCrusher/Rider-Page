@@ -19,7 +19,13 @@ This website is hosted by {{hosting}}. Each time a page is requested, the server
 
 ## Cookies
 
-This website does not use cookies for tracking, advertising or analysis, and it does not show a cookie banner. A technical cookie is set only for the website owner and authorised editors after they log in to the administration area. Visitors do not receive any cookie.
+This website does not use cookies for tracking, advertising or analysis, and it does not ask for cookie consent because none is needed. A technical cookie is set only for the website owner and authorised editors after they log in to the administration area. Visitors do not receive any cookie.
+
+{{#if stats}}
+## Visit statistics
+
+This website counts visits with a statistics tool that runs on its own server. No cookies are set and no IP address is stored. For each page view the tool saves the page, the website the visitor came from, the type of device (phone, tablet or computer) and the browser family. To count a visitor only once per day, it uses a code that is calculated from the IP address and the browser and that changes every day, so a visitor can not be recognised from one day to the next. Clicks on sponsor, social media and video links are counted in the same way. Visitors who send the "Do Not Track" or "Global Privacy Control" signal are not counted. The detailed data is deleted after {{stats_days}} days; only daily totals remain. Legal basis: legitimate interest in understanding how the website is used, Art. 6(1)(f) GDPR.
+{{/if}}
 
 {{#if contact_form}}
 ## Contact form

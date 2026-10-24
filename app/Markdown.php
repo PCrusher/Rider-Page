@@ -112,7 +112,7 @@ final class Markdown
     public static function video(string $id): string
     {
         return '<div class="video" data-yt="' . e($id) . '"><div class="vframe">'
-            . '<button type="button" class="play" aria-label="' . e(t('video.play')) . '"></button>'
+            . '<button type="button" class="play" data-t="video:play" aria-label="' . e(t('video.play')) . '"></button>'
             . '<span class="vnote">' . e(t('video.note')) . '</span></div>'
             . '<noscript><a href="https://www.youtube.com/watch?v=' . e($id) . '" rel="noopener">' . e(t('video.watch')) . '</a></noscript></div>';
     }

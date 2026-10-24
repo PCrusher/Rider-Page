@@ -142,6 +142,7 @@ final class Installer
         Settings::setMany([
             'name' => $in['site_name'], 'lang' => $in['lang'], 'preset' => $in['preset'],
             'email' => $in['admin_email'], 'installed_version' => Updater::version(),
+            'stats_on' => '1',
         ]);
         Lang::reset();
         if ($in['example'] === '1') {

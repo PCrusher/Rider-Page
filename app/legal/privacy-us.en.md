@@ -16,6 +16,9 @@ Email: {{email}}
 
 - **Server logs.** The website is hosted by {{hosting}}. The server records your IP address, the date and time, the pages you request, the referring page, and your browser and device type. This is used to run the site securely and fix problems.
 - **Cookies.** This website does not use cookies for tracking, advertising or analytics. A technical cookie is set only for the website owner and editors after they log in.
+{{#if stats}}
+- **Visit statistics.** The website counts visits with a tool on its own server. It sets no cookies and stores no IP address. It saves the page, the website the visitor came from, the type of device and the browser family, and uses a code that changes every day to count a visitor once per day. Visitors who send "Do Not Track" or "Global Privacy Control" are not counted. Details are deleted after {{stats_days}} days; only daily totals remain.
+{{/if}}
 {{#if contact_form}}
 - **Contact form.** If you send a message, we collect your name, email address and message and use them to reply. The message is emailed to us{{#if smtp}} through the mail server {{smtp_host}}{{/if}} and stored in the administration area. A pseudonymous value derived from your IP address is stored with it to protect the form against abuse. We delete messages after {{retention}} unless we need to keep them longer by law.
 {{/if}}

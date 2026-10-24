@@ -19,7 +19,13 @@ Diese Website wird bei {{hosting}} gehostet. Bei jedem Aufruf einer Seite speich
 
 ## Cookies
 
-Diese Website verwendet keine Cookies zu Tracking-, Werbe- oder Analysezwecken und zeigt deshalb kein Cookie-Banner. Ein technisch notwendiges Cookie wird nur für den Betreiber und berechtigte Redakteure gesetzt, nachdem sie sich im Verwaltungsbereich angemeldet haben. Besucher erhalten kein Cookie.
+Diese Website verwendet keine Cookies zu Tracking-, Werbe- oder Analysezwecken und holt deshalb keine Cookie-Einwilligung ein, weil keine nötig ist. Ein technisch notwendiges Cookie wird nur für den Betreiber und berechtigte Redakteure gesetzt, nachdem sie sich im Verwaltungsbereich angemeldet haben. Besucher erhalten kein Cookie.
+
+{{#if stats}}
+## Besuchsstatistik
+
+Diese Website zählt Besuche mit einem Statistik-Werkzeug, das auf dem eigenen Server läuft. Es werden keine Cookies gesetzt und keine IP-Adressen gespeichert. Pro Seitenaufruf speichert das Werkzeug die aufgerufene Seite, die Website, von der der Besucher kam, die Geräteart (Smartphone, Tablet oder Computer) und die Browser-Familie. Um einen Besucher nur einmal pro Tag zu zählen, wird ein Code verwendet, der aus IP-Adresse und Browser berechnet wird und sich jeden Tag ändert. Ein Besucher kann so nicht von einem Tag zum nächsten wiedererkannt werden. Klicks auf Sponsoren-, Social-Media- und Video-Links werden auf die gleiche Weise gezählt. Besucher, die das Signal „Do Not Track“ oder „Global Privacy Control“ senden, werden nicht gezählt. Die detaillierten Daten werden nach {{stats_days}} Tagen gelöscht, übrig bleiben nur Tagessummen. Rechtsgrundlage ist das berechtigte Interesse, die Nutzung der Website zu verstehen, Art. 6 Abs. 1 lit. f DSGVO.
+{{/if}}
 
 {{#if contact_form}}
 ## Kontaktformular

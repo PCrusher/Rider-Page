@@ -140,6 +140,10 @@ final class Admin
             self::maintenance($post);
         } elseif ($sec === 'qr') {
             self::qr($act, $post);
+        } elseif ($sec === 'statistics') {
+            self::statistics($act, $post);
+        } elseif ($sec === 'notice') {
+            self::notice($post);
         } elseif ($sec === 'pages') {
             self::pages($act, $post);
         } elseif ($sec === 'legal') {
@@ -284,6 +288,7 @@ final class Admin
             'notFound' => self::notFoundCount(),
             'pending' => (int)Db::val("SELECT COUNT(*) FROM posts WHERE status = 'pending'"),
             'unread' => self::unreadCount(),
+            'week' => Analytics::enabled() ? self::weekStats() : null,
             'legalMissing' => self::$user['role'] === 'admin' && self::legalMissing(),
             'update' => Updater::cached(),
         ], 'Dashboard');
@@ -296,6 +301,16 @@ final class Admin
             return (int)Db::val("SELECT COUNT(*) FROM pages WHERE status = 'published' AND template <> ''") === 0;
         } catch (Throwable) {
             return false;
+        }
+    }
+
+    private static function weekStats(): ?array
+    {
+        try {
+            $r = Analytics::report(7);
+            return ['views' => $r['views'], 'visitors' => $r['visitors']];
+        } catch (Throwable) {
+            return null;
         }
     }
 
@@ -783,6 +798,68 @@ final class Admin
             'defaultTitle' => t('maint.title'),
             'defaultText' => t('maint.text'),
         ], 'Maintenance');
+    }
+
+    /* ---------- statistics and cookie notice ---------- */
+
+    private static function statistics(string $act, bool $post): void
+    {
+        $admin = self::$user['role'] === 'admin';
+        if ($post) {
+            if (!$admin) {
+                flash('Only admins can change the statistics settings.', 'error');
+                redirect('/admin/statistics');
+            }
+            if ($act === 'settings') {
+                $d = (int)($_POST['stats_days'] ?? 90);
+                Settings::setMany(['stats_on' => !empty($_POST['stats_on']) ? '1' : '0', 'stats_days' => (string)(in_array($d, [30, 90, 365], true) ? $d : 90)]);
+                flash('Saved.');
+            } elseif ($act === 'wipe') {
+                Analytics::wipe();
+                flash('All statistics were deleted.');
+            }
+            redirect('/admin/statistics');
+        }
+        $days = (int)($_GET['d'] ?? 30);
+        if ($act === 'csv') {
+            $what = in_array($_GET['what'] ?? '', ['pages', 'clicks'], true) ? (string)$_GET['what'] : 'days';
+            $head = ['pages' => ['page', 'views', 'visitors'], 'clicks' => ['target', 'clicks'], 'days' => ['day', 'views', 'visitors']][$what];
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="statistics-' . $what . '.csv"');
+            $out = fopen('php://output', 'w');
+            fputcsv($out, $head);
+            foreach (Analytics::csv($what, $days) as $row) {
+                fputcsv($out, $row);
+            }
+            fclose($out);
+            exit;
+        }
+        if (Analytics::enabled()) {
+            Analytics::prune();
+        }
+        self::view('statistics', [
+            'r' => Analytics::report($days), 'on' => Analytics::enabled(), 'keep' => Analytics::retentionDays(), 'admin' => $admin,
+        ], 'Statistics');
+    }
+
+    private static function notice(bool $post): void
+    {
+        if ($post) {
+            Settings::setMany([
+                'notice_on' => !empty($_POST['on']) ? '1' : '0',
+                'notice_text' => mb_substr(trim((string)($_POST['text'] ?? '')), 0, 500),
+                'notice_ok' => mb_substr(trim((string)($_POST['ok'] ?? '')), 0, 40),
+                'notice_link' => !empty($_POST['link']) ? '1' : '0',
+            ]);
+            flash('Saved.');
+            redirect('/admin/notice');
+        }
+        $n = Site::notice();
+        self::view('notice', [
+            'on' => $n['on'], 'text' => (string)Settings::get('notice_text', ''), 'ok' => (string)Settings::get('notice_ok', ''),
+            'link' => Settings::get('notice_link', '1') !== '0', 'defaultText' => $n['text'], 'defaultOk' => t('notice.ok'),
+            'hasPrivacy' => $n['link'] !== null, 'stats' => Analytics::enabled(),
+        ], 'Cookie notice');
     }
 
     /* ---------- pages and legal pages ---------- */

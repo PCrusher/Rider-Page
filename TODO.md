@@ -10,7 +10,6 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [!] Test the one-click update from a real release (0.1.x to 0.2.0) on the live host
 - [ ] Check `https://domain/storage/config.php` is blocked by the installer itself and warn if it is not
 - [!] Sponsor links: automatic `rel="sponsored"` and an optional "Ad" label per sponsor (paid links need it for search engines, and in Germany for advertising law)
-- [!] Local analytics, cookie-free: page views, visitors per day (salted daily hash, no IP stored), referrers, devices, top posts, clicks on sponsor and social links, CSV export, raw data deleted after 30 days
 - [!] Favicon upload and a default share image for links on social media (the site has neither)
 - [ ] Contact messages: delete automatically after the period set in the privacy policy, export and delete everything of one person
 - [ ] Backup download in the admin (database and uploads as one zip) next to the restore button
@@ -61,6 +60,13 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] Latin-extended fonts for Central and Eastern European names
 - [ ] Accessibility audit (keyboard, screen reader, contrast) of all four layouts
 
+## Statistics
+
+- [ ] Sponsor report: one page per partner with clicks over time, ready to print or save as PDF
+- [ ] Compare periods (this month with last month), and events such as contact form sends
+- [ ] Posts: views per post inside the blog list
+- [ ] Search terms are not available without a search engine account; link to Google Search Console and Bing Webmaster Tools with a short guide
+
 ## Performance and SEO
 
 - [ ] Cache rendered pages as files, clear on every admin change
@@ -99,3 +105,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.9.0: QR login with a phone, list of logged-in devices with log out
 - 0.10.0: QR login reversed: the logged-in computer shows the code, the phone logs in
 - 0.11.0: version history and release notes in Updates, side menu with more contrast, menu button for phones
+- 0.12.0: cookie-free visit statistics in the admin, optional cookie notice

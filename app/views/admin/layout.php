@@ -3,6 +3,7 @@
 $role = (string)$user['role'];
 $items = [
     ['', 'Dashboard', '/admin', ''],
+    ['statistics', 'Statistics', '/admin/statistics', ''],
     ['profile', 'Profile', '/admin/profile', 'Content'],
     ['socials', 'Social accounts', '/admin/socials', 'Content'],
     ['stats', 'Results', '/admin/stats', 'Content'],
@@ -18,6 +19,7 @@ $items = [
     ['maintenance', 'Maintenance', '/admin/maintenance', 'Page'],
     ['errorpage', '404 page', '/admin/errorpage', 'Page'],
     ['redirects', 'Redirects', '/admin/redirects', 'Page'],
+    ['notice', 'Cookie notice', '/admin/notice', 'Page'],
     ['users', 'Users', '/admin/users', 'System'],
     ['email', 'Email', '/admin/email', 'System'],
     ['update', 'Updates', '/admin/update', 'System'],

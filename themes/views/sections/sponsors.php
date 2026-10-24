@@ -14,7 +14,7 @@ $i = 0;
           <?php foreach ($list as $s): ?>
             <?php
             $tag = $s['url'] !== '' ? 'a' : 'div';
-            $attr = $s['url'] !== '' ? ' href="' . e($s['url']) . '" target="_blank" rel="noopener"' : '';
+            $attr = $s['url'] !== '' ? ' href="' . e($s['url']) . '" target="_blank" rel="noopener" data-t="sponsor:' . e($s['name']) . '"' : '';
             ?>
             <<?= $tag ?> class="sp"<?= $attr ?>>
               <?php if ($s['logo'] !== ''): ?>

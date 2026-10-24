@@ -11,7 +11,7 @@ final class Legal
     /** Address words that pages may not use because the site itself needs them. */
     private const RESERVED = [
         'admin', 'assets', 'uploads', 'blog', 'contact', 'install', 'storage', 'app', 'themes',
-        'sitemap', 'robots', 'index', 'api', 'login', 'logout',
+        'sitemap', 'robots', 'index', 'api', 'login', 'logout', 't',
     ];
 
     /** Page role -> language -> [address, title] */
@@ -153,6 +153,7 @@ final class Legal
             'other_services' => trim((string)Settings::get('legal_other_services', '')),
             'smtp_host' => trim((string)Settings::get('smtp_host', '')),
             'date' => $de ? date('d.m.Y') : date('j F Y'),
+            'stats_days' => (string)Analytics::retentionDays(),
         ];
     }
 
@@ -182,6 +183,7 @@ final class Legal
             'has_reg' => $vars['register'] !== '' || $vars['vat'] !== '',
             'other_services' => $vars['other_services'] !== '',
             'smtp' => $vars['smtp_host'] !== '',
+            'stats' => Analytics::enabled(),
             'dach' => $region === 'dach',
             'uk' => $region === 'uk',
             'us' => $region === 'us',

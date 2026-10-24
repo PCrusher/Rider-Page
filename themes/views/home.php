@@ -12,7 +12,7 @@ $types = social_types();
       <?php if ($socials): ?>
         <div class="socials">
           <?php foreach ($socials as $s): ?>
-            <a class="chip" href="<?= e($s['url']) ?>" target="_blank" rel="me noopener"><?= e($types[$s['type']] ?? ucfirst((string)$s['type'])) ?><?php if ($s['handle'] !== ''): ?> <small><?= e($s['handle']) ?></small><?php endif; ?></a>
+            <a class="chip" href="<?= e($s['url']) ?>" target="_blank" rel="me noopener" data-t="social:<?= e($s['type']) ?>"><?= e($types[$s['type']] ?? ucfirst((string)$s['type'])) ?><?php if ($s['handle'] !== ''): ?> <small><?= e($s['handle']) ?></small><?php endif; ?></a>
           <?php endforeach; ?>
         </div>
       <?php endif; ?>

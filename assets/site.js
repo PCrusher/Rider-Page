@@ -3,6 +3,22 @@
   var me = document.currentScript;
   var copiedText = (me && me.dataset.copied) || 'Copied';
 
+  /* Count clicks on sponsor, social and video links (only when statistics are on). No cookie, no identifier. */
+  var beacon = me && me.dataset.beacon;
+  function track(el) {
+    if (!beacon || !el || !navigator.sendBeacon || navigator.doNotTrack === '1') { return; }
+    try {
+      var fd = new FormData();
+      fd.append('t', el.getAttribute('data-t'));
+      fd.append('p', window.location.pathname);
+      navigator.sendBeacon(beacon, fd);
+    } catch (err) { /* statistics must never break the page */ }
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-t]');
+    if (t) { track(t); }
+  });
+
   /* Click-to-load YouTube: nothing is requested from YouTube until the visitor presses play. */
   document.addEventListener('click', function (e) {
     var play = e.target.closest('.video .play');
@@ -32,6 +48,21 @@
       }
     }
   });
+
+  /* The cookie notice: shown until it was dismissed once. The choice is kept in this browser only (no cookie). */
+  var note = document.getElementById('notice');
+  if (note) {
+    var key = 'rp-notice';
+    var seen = false;
+    try { seen = window.localStorage.getItem(key) === note.getAttribute('data-id'); } catch (err) { /* private mode */ }
+    if (!seen) { note.hidden = false; }
+    note.addEventListener('click', function (e) {
+      if (e.target.closest('[data-notice-ok]')) {
+        note.hidden = true;
+        try { window.localStorage.setItem(key, note.getAttribute('data-id')); } catch (err) { /* ignore */ }
+      }
+    });
+  }
 
   /* Highlight the menu item of the section in view. */
   var links = Array.prototype.slice.call(document.querySelectorAll('.snav a[data-sec]'));

@@ -15,7 +15,16 @@ final class Site
             self::handleContact();
             return;
         }
+        if ($path === '/t' && $method === 'POST') {
+            // Click on a sponsor, social or video link (see Analytics).
+            Analytics::click((string)($_POST['t'] ?? ''), (string)($_POST['p'] ?? '/'));
+            http_response_code(204);
+            return;
+        }
         $r = self::response($path);
+        if ($method === 'GET' && $r['status'] === 200 && str_starts_with($r['type'], 'text/html')) {
+            Analytics::page($path);
+        }
         http_response_code($r['status']);
         header('Content-Type: ' . $r['type']);
         foreach ($r['headers'] as $h) {
@@ -129,6 +138,28 @@ final class Site
         }
         $html .= '<p><a class="btn" href="' . e(url('/')) . '">' . e(t('e404.home')) . '</a></p></div>';
         return self::page(404, self::layout(['title' => $title, 'content' => $html, 'noindex' => true]));
+    }
+
+    /** The cookie and privacy notice bar. */
+    public static function notice(): array
+    {
+        $text = trim((string)Settings::get('notice_text', ''))
+            ?: t('notice.text') . (Analytics::enabled() ? ' ' . t('notice.stats') : '');
+        $ok = trim((string)Settings::get('notice_ok', '')) ?: t('notice.ok');
+        $link = null;
+        if (Settings::get('notice_link', '1') !== '0') {
+            try {
+                $slug = Db::val("SELECT slug FROM pages WHERE status = 'published' AND template LIKE 'privacy%' ORDER BY id LIMIT 1");
+                if ($slug) {
+                    $link = ['url' => url('/' . $slug), 'label' => t('notice.more')];
+                }
+            } catch (Throwable) {
+            }
+        }
+        return [
+            'on' => Settings::get('notice_on', '0') === '1', 'text' => $text, 'ok' => $ok, 'link' => $link,
+            'id' => substr(md5($text . '|' . $ok), 0, 8),
+        ];
     }
 
     /* ---------- section headings and partner levels ---------- */
@@ -413,6 +444,8 @@ final class Site
             'hasBlog' => in_array('blog', $sections, true) || count(self::posts(1)) > 0,
             'nav' => array_values(array_filter($sections, static fn($id) => $id !== 'contact')),
             'hasContact' => in_array('contact', $sections, true),
+            'beacon' => Analytics::enabled() ? url('/t') : '',
+            'notice' => self::notice(),
             'titles' => self::titles(),
             'footerPages' => self::footerPages(),
             'tierLabels' => self::tierLabels(),

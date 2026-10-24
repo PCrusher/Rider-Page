@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: version history and release notes on the Updates page, a clearer side menu, and a menu button for phones.",
+  "changelog": "New: visit statistics in the admin (cookie-free, no IP addresses stored) and an optional cookie notice. Existing sites start with statistics switched off. Adds two tables.",
   "warnings": []
 }

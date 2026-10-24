@@ -454,6 +454,98 @@ try {
     Db::run('DELETE FROM qr_tokens');
     Db::run('UPDATE users SET qr_enabled = 0');
 
+    echo "Statistics and cookie notice\n";
+    check(Analytics::enabled(), 'statistics are on after a fresh install');
+    Db::run('DELETE FROM hits');
+    Db::run('DELETE FROM hit_days');
+    $ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+    $_SERVER['HTTP_USER_AGENT'] = $ua;
+    $_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+    $_SERVER['HTTP_REFERER'] = 'https://www.instagram.com/some/post';
+    Analytics::page('/');
+    $row = Db::row('SELECT * FROM hits');
+    check($row && $row['path'] === '/' && $row['ref'] === 'instagram.com' && $row['dev'] === 'phone' && $row['br'] === 'Safari' && strlen($row['vh']) === 16, 'a visit is stored with page, referrer domain, device and browser');
+    check(!str_contains((string)json_encode($row), '203.0.113.7') && !str_contains((string)json_encode($row), 'iPhone'), 'neither the IP address nor the full browser text is stored');
+    Analytics::page('/blog');
+    check((int)Db::val('SELECT COUNT(*) FROM hits') === 2 && (int)Db::val('SELECT COUNT(DISTINCT vh) FROM hits') === 1, 'one visitor on one day has one code');
+    $_SERVER['REMOTE_ADDR'] = '203.0.113.8';
+    Analytics::page('/');
+    check((int)Db::val('SELECT COUNT(DISTINCT vh) FROM hits') === 2, 'another visitor gets another code');
+    $_SERVER['HTTP_REFERER'] = 'http://localhost/blog';
+    Analytics::page('/blog/welcome');
+    check(Db::val("SELECT ref FROM hits WHERE path = '/blog/welcome'") === '', 'a referrer from the own site is not counted as a source');
+
+    $count = static fn(): int => (int)Db::val('SELECT COUNT(*) FROM hits');
+    $n = $count();
+    $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+    Analytics::page('/');
+    check($count() === $n, 'bots are not counted');
+    $_SERVER['HTTP_USER_AGENT'] = $ua;
+    $_SERVER['HTTP_DNT'] = '1';
+    Analytics::page('/');
+    unset($_SERVER['HTTP_DNT']);
+    $_SERVER['HTTP_SEC_GPC'] = '1';
+    Analytics::page('/');
+    unset($_SERVER['HTTP_SEC_GPC']);
+    $_SERVER['HTTP_SEC_PURPOSE'] = 'prefetch';
+    Analytics::page('/');
+    unset($_SERVER['HTTP_SEC_PURPOSE']);
+    check($count() === $n, 'Do Not Track, Global Privacy Control and prefetch requests are not counted');
+    Settings::set('stats_on', '0');
+    Analytics::page('/');
+    Settings::set('stats_on', '1');
+    check($count() === $n, 'nothing is counted while statistics are off');
+
+    Analytics::click('sponsor:Example Partner', '/');
+    Analytics::click('social:instagram', '/');
+    Analytics::click('video:play', '/blog/welcome');
+    $clicks = (int)Db::val("SELECT COUNT(*) FROM hits WHERE kind = 'click'");
+    Analytics::click('sponsor:No Such Sponsor', '/');
+    Analytics::click('social:tiktok', '/');
+    Analytics::click('evil:thing', '/');
+    Analytics::click('sponsor:' . str_repeat('x', 200), '/');
+    check($clicks === 3 && (int)Db::val("SELECT COUNT(*) FROM hits WHERE kind = 'click'") === 3, 'clicks are counted only for sponsors, social accounts and the video that exist');
+
+    $rep = Analytics::report(7);
+    check($rep['views'] === 4 && $rep['visitors'] === 2, 'the report counts views and daily visitors', $rep['views'] . '/' . $rep['visitors']);
+    check($rep['pages'][0]['k'] === '/' && (int)$rep['pages'][0]['n'] === 2, 'top pages are listed by views');
+    check($rep['referrers'][0]['k'] === 'instagram.com' && (int)$rep['referrers'][0]['n'] === 3, 'top sources are listed');
+    check($rep['devices'][0]['k'] === 'phone' && count($rep['clicks']) === 3 && count($rep['series']) === 7, 'devices, clicks and one entry per day are reported');
+    check(Analytics::csv('days', 7)[6][1] === 4, 'the CSV rows hold the daily totals');
+
+    $home = Site::response('/')['body'];
+    check(str_contains($home, 'data-t="sponsor:Example Partner"') && str_contains($home, 'data-t="social:instagram"') && str_contains($home, 'data-beacon="/t"'), 'links carry a tracking label and the script gets the beacon address while statistics are on');
+    Settings::set('stats_on', '0');
+    check(!str_contains(Site::response('/')['body'], 'data-beacon'), 'no beacon address while statistics are off');
+    Settings::set('stats_on', '1');
+
+    Db::run("UPDATE hits SET day = ? WHERE kind = 'page'", [date('Y-m-d', strtotime('-200 days'))]);
+    Analytics::prune();
+    check((int)Db::val("SELECT COUNT(*) FROM hits WHERE kind = 'page'") === 0 && (int)Db::val('SELECT views FROM hit_days') === 4 && (int)Db::val('SELECT visitors FROM hit_days') === 2, 'old details are folded into daily totals and deleted');
+    check(Analytics::report(90)['views'] === 0, 'days outside the range are not reported');
+    Analytics::wipe();
+    check((int)Db::val('SELECT COUNT(*) FROM hits') + (int)Db::val('SELECT COUNT(*) FROM hit_days') === 0, 'all statistics can be deleted');
+
+    Settings::set('stats_on', '1');
+    check(str_contains(Legal::build('privacy-gdpr', 'dach', 'en')['body'], 'Visit statistics') && str_contains(Legal::build('privacy-gdpr', 'dach', 'en')['body'], 'after 90 days'), 'the privacy policy describes the statistics while they are on');
+    Settings::set('stats_on', '0');
+    check(!str_contains(Legal::build('privacy-gdpr', 'dach', 'de')['body'], 'Besuchsstatistik'), 'and leaves them out while they are off');
+    Settings::set('stats_on', '1');
+    unset($_SERVER['HTTP_REFERER']);
+
+    check(!str_contains(Site::response('/')['body'], 'id="notice"'), 'the cookie notice is off by default');
+    Settings::set('notice_on', '1');
+    $b = Site::response('/')['body'];
+    check(str_contains($b, 'id="notice"') && str_contains($b, 'does not use cookies for tracking or advertising') && str_contains($b, 'Anonymous visit statistics'), 'the notice shows the standard text and mentions the statistics');
+    check(!str_contains($b, 'href="/privacy"'), 'no policy link without a published privacy policy');
+    Db::insert('pages', ['slug' => 'privacy', 'title' => 'Privacy', 'body' => 'x', 'status' => 'published', 'in_footer' => 1, 'pos' => 1, 'template' => 'privacy-gdpr', 'updated_at' => now()]);
+    check(str_contains(Site::response('/')['body'], 'class="notice"') && str_contains(Site::response('/')['body'], 'href="/privacy">Privacy policy</a>'), 'the notice links to the published privacy policy');
+    $id1 = Site::notice()['id'];
+    Settings::set('notice_text', 'Custom words about cookies.');
+    check(str_contains(Site::response('/')['body'], 'Custom words about cookies.') && Site::notice()['id'] !== $id1, 'own text is used and makes the notice show again');
+    Settings::setMany(['notice_on' => '0', 'notice_text' => '']);
+    Db::run('DELETE FROM pages');
+
     echo "Images\n";
     $png = $tmp . '/test.png';
     $im = imagecreatetruecolor(2400, 1600);

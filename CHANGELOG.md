@@ -3,6 +3,15 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.12.0
+
+- **Statistics** (*Admin -> Statistics*, for admins and editors): page views and visitors per day as a chart for 7, 30 or 90 days, top pages and posts, where visitors came from, devices and browsers, and clicks on partner links, social accounts and the video. CSV download for each table.
+- **Privacy by design.** No cookie is set and no IP address is stored. A visitor is counted once per day through a code that changes every day, so nobody can be followed from one day to the next. Bots, logged-in admins, prefetching and visitors who send "Do Not Track" or "Global Privacy Control" are not counted. Detailed data is kept for 30 days, 90 days or one year (you choose) and then only the daily totals remain. All of it can be deleted with one button.
+- **New installs have statistics on; existing sites start with them off**, so nothing is collected without you knowing. Switch them on under *Statistics -> Settings*, then update the privacy policy under *Legal pages* ("Replace pages I created from these templates"): the templates now describe the statistics when they are on.
+- **Cookie notice** (*Admin -> Cookie notice*, off by default): a small bar that informs visitors about cookies and data and links to the privacy policy. Your own text and button are possible. It is explained clearly that this site needs no consent banner as it is built, and that the notice would not be enough if tracking tools were added.
+- The dashboard shows the last 7 days. The privacy templates no longer say that no cookie banner is shown.
+- Adds the tables `hits` and `hit_days`.
+
 ## 0.11.0
 
 - **Version history on the Updates page.** Before you update, the page shows what is new in the version that is available (taken from this changelog). Below it, a history of every version with details of what changed, newest first, with your version marked. The history comes with every update, so it is always current.

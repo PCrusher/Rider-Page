@@ -322,3 +322,11 @@ a.sp:hover { border-color: var(--s-accent); }
   .gallery .gal .ph, .gallery .gal:nth-child(n) .ph { aspect-ratio: 1; }
   .site[data-design="sunday"] .hero-photo { aspect-ratio: 1; }
 }
+
+/* cookie notice */
+.notice { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60; max-width: 760px; margin-inline: auto; display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; padding: 14px 18px; background: var(--s-fg); color: var(--s-bg); border-radius: var(--rad); box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
+.notice[hidden] { display: none; }
+.notice p { flex: 1 1 280px; margin: 0; font-size: .9375rem; }
+.notice a { color: inherit; }
+.notice .btn { border-color: currentColor; color: inherit; background: transparent; }
+.site[data-design="sunday"] .notice { border: 2px solid var(--s-outline); box-shadow: 4px 4px 0 var(--s-outline); }

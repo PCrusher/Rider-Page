@@ -1,4 +1,4 @@
-<?php /** Variables: $steps $hidden $update $maintenance $notFound $pending $unread $legalMissing */ ?>
+<?php /** Variables: $steps $hidden $update $maintenance $notFound $pending $unread $legalMissing $week */ ?>
 <h1>Dashboard</h1>
 <p class="muted">Welcome back. Here is where your page stands.</p>
 
@@ -6,6 +6,13 @@
   <div class="box bad">
     <b>Maintenance mode is on.</b> Visitors see a maintenance page instead of your site.
     <a href="<?= e(url('/admin/maintenance')) ?>">Turn it off</a>
+  </div>
+<?php endif; ?>
+
+<?php if ($week !== null): ?>
+  <div class="box">
+    <b>Last 7 days:</b> <?= number_format((int)$week['views']) ?> page views from <?= number_format((int)$week['visitors']) ?> visitors.
+    <a href="<?= e(url('/admin/statistics')) ?>">Open the statistics</a>
   </div>
 <?php endif; ?>
 

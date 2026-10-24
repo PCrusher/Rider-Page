@@ -32,7 +32,7 @@ $homeUrl = url('/');
 <style nonce="<?= e(rp_nonce()) ?>"><?= Presets::css() ?></style>
 <?php if ($jsonld): ?><script type="application/ld+json"><?= json_encode($jsonld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
 <?php endif; ?>
-<script src="<?= e(asset('site.js')) ?>" defer data-copied="<?= e(t('contact.copied')) ?>" data-load="<?= e(t('video.play')) ?>"></script>
+<script src="<?= e(asset('site.js')) ?>" defer data-copied="<?= e(t('contact.copied')) ?>" data-load="<?= e(t('video.play')) ?>"<?= !empty($beacon) ? ' data-beacon="' . e($beacon) . '"' : '' ?>></script>
 </head>
 <body>
 <div class="site" data-design="<?= e($design) ?>" id="top-of-site">
@@ -66,6 +66,12 @@ $homeUrl = url('/');
     <?php endif; ?>
     <span><?= e(t('foot.built')) ?></span>
   </div></div>
+  <?php if (!empty($notice['on'])): ?>
+    <div class="notice" id="notice" role="region" aria-label="<?= e(t('notice.label')) ?>" data-id="<?= e($notice['id']) ?>" hidden>
+      <p><?= e($notice['text']) ?><?php if ($notice['link']): ?> <a href="<?= e($notice['link']['url']) ?>"><?= e($notice['link']['label']) ?></a><?php endif; ?></p>
+      <button type="button" class="btn" data-notice-ok><?= e($notice['ok']) ?></button>
+    </div>
+  <?php endif; ?>
 </div>
 </body>
 </html>
