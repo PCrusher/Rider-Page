@@ -49,6 +49,17 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [ ] 404 page: suggest the closest matching post or section; separate 404 text per language
 - [ ] Redirects: import and export as CSV, wildcard rules (for example a whole old folder)
 
+## Inspiration: julianclaudi.de (athlete portfolio with results, projects and podcast)
+
+- [!] Results with history: choose a year, per race the position as a big badge (P1, P2 …), event, class, optional photo credit; summary like "11 races, 5 podiums"; separate page with all years
+- [ ] Projects (case studies): cards with photo, year, title and a page per project (campaign, trip report, test); "all projects" page
+- [ ] "Paddock" layout: dark photographic page, full-width hero photo with the name set large at the bottom right, disciplines as a small label line, copper accent
+- [ ] Capabilities list ("what sets me apart") for sponsors, as a block of short items
+- [ ] Podcast / channel block with latest episodes
+- [ ] Partner wall with logos on a dark background, linking to a partner and services page (media kit)
+- [ ] Full-screen overlay menu with a MENU button as a layout option
+- [ ] Page languages: switch between several languages with separate texts (DE / EN / ES)
+
 ## Design
 
 - [ ] Legal pages: more countries and languages (French, Spanish, Dutch), terms of use template, accessibility statement, per-sponsor 'Ad' label and rel=sponsored on sponsor links
