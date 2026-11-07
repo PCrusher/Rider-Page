@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New: two-factor login (authenticator app, recovery codes), forgot password by email with a recovery file as emergency way, and security emails (QR login, new device, password or two-factor changes). Adds columns and three tables.",
+  "changelog": "New layout \"Paddock\": dark photo hero with the name set large at the bottom right, copper or ice-blue accent, grain texture and small mono labels. Two new presets and an optional small line under the name.",
   "warnings": []
 }

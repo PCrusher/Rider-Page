@@ -4,7 +4,7 @@ declare(strict_types=1);
 /** Colour presets. Each one is a layout (see assets/site.css) plus a palette. */
 final class Presets
 {
-    public const LAYOUTS = ['rally', 'manuscript', 'night', 'sunday'];
+    public const LAYOUTS = ['rally', 'manuscript', 'night', 'sunday', 'paddock'];
 
     /** Layout-level defaults for tokens a preset does not set. */
     private const LAYOUT_DEFAULTS = [
@@ -12,6 +12,7 @@ final class Presets
         'manuscript' => ['herobg' => 'transparent', 'altbg' => 'transparent', 'contactbg' => 'transparent', 'contactfg' => '@fg'],
         'night' => ['herobg' => 'transparent', 'altbg' => 'transparent', 'contactbg' => '@surface', 'contactfg' => '@fg'],
         'sunday' => ['herobg' => '@hl', 'altbg' => '@surface', 'contactbg' => '@accent', 'contactfg' => '@accent-ink'],
+        'paddock' => ['herobg' => 'transparent', 'altbg' => 'transparent', 'contactbg' => '@surface', 'contactfg' => '@fg'],
     ];
 
     public static function all(): array
@@ -61,6 +62,16 @@ final class Presets
                 'name' => 'Sunday', 'note' => 'Loud and friendly', 'layout' => 'sunday',
                 'bg' => '#FFFFFF', 'surface' => '#F1EFFF', 'fg' => '#151515', 'muted' => '#4B4B55', 'line' => '#151515',
                 'accent' => '#2B3CFF', 'hl' => '#FFD23F', 'hl-ink' => '#151515', 'ph1' => '#FFD23F', 'ph2' => '#FF8A5C',
+            ],
+            'paddock' => [
+                'name' => 'Paddock', 'note' => 'Dark photo hero, copper accent', 'layout' => 'paddock',
+                'bg' => '#0B0B0A', 'surface' => '#151412', 'fg' => '#F1EDE6', 'muted' => '#A39B8F', 'line' => '#2B2926',
+                'accent' => '#E48B5E', 'hl' => '#E48B5E', 'hl-ink' => '#1A0D06', 'ph1' => '#24201C', 'ph2' => '#100F0D',
+            ],
+            'paddock-ice' => [
+                'name' => 'Paddock Ice', 'note' => 'Dark photo hero, ice blue accent', 'layout' => 'paddock',
+                'bg' => '#090B0D', 'surface' => '#12161A', 'fg' => '#EDF1F4', 'muted' => '#93A0AA', 'line' => '#252C33',
+                'accent' => '#8FD0E8', 'hl' => '#8FD0E8', 'hl-ink' => '#08161D', 'ph1' => '#1B2229', 'ph2' => '#0D1115',
             ],
             'sorbet' => [
                 'name' => 'Sorbet', 'note' => 'Soft pink and teal', 'layout' => 'sunday',

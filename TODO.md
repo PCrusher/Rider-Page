@@ -51,9 +51,8 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 
 ## Inspiration: julianclaudi.de (athlete portfolio with results, projects and podcast)
 
-- [!] Results with history: choose a year, per race the position as a big badge (P1, P2 …), event, class, optional photo credit; summary like "11 races, 5 podiums"; separate page with all years
+- [ ] Results with history (the current Results are number tiles): choose a year, per race the position as a big badge (P1, P2 …), event, class, optional photo credit; summary like "11 races, 5 podiums"; separate page with all years
 - [ ] Projects (case studies): cards with photo, year, title and a page per project (campaign, trip report, test); "all projects" page
-- [ ] "Paddock" layout: dark photographic page, full-width hero photo with the name set large at the bottom right, disciplines as a small label line, copper accent
 - [ ] Capabilities list ("what sets me apart") for sponsors, as a block of short items
 - [ ] Podcast / channel block with latest episodes
 - [ ] Partner wall with logos on a dark background, linking to a partner and services page (media kit)
@@ -120,3 +119,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.11.0: version history and release notes in Updates, side menu with more contrast, menu button for phones
 - 0.12.0: cookie-free visit statistics in the admin, optional cookie notice
 - 0.13.0: two-factor login (TOTP with recovery codes), forgot password with email link and recovery file, security emails
+- 0.14.0: Paddock layout (dark photo hero, name bottom right, copper or ice accent) and a small line under the name

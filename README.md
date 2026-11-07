@@ -9,7 +9,7 @@ own web hosting, answer a few questions in a browser, and get a website with:
 - a blog with pictures, links and YouTube videos
 - an FAQ and a contact section
 - a sticky menu that jumps to each section, in an order you choose
-- 10 designs with editable colours
+- 12 designs on 5 layouts, with editable colours
 
 It needs no command line, no Composer and no Node. Updates are installed from the admin area.
 
@@ -52,7 +52,7 @@ Open `/admin` on your site.
 | Social accounts, Results, Partners, Photos, FAQ | Lists you can add to, edit, reorder and delete |
 | Blog | Posts with a cover image, optional photo credits, pictures, links and YouTube. Drafts and future dates are supported |
 | Sections | Order of the sections, switch sections on or off, rename headings and partner levels. Empty sections hide themselves |
-| Appearance | 10 presets, accent colour, background and text colour, with a contrast warning |
+| Appearance | 12 presets, accent colour, background and text colour, with a contrast warning |
 | 404 page, Redirects | Edit the page for unknown addresses; redirect old addresses to new ones; see which addresses were not found |
 | Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |
 | Updates | Check for and install new versions; shows what is new and the history of every version |

@@ -78,7 +78,8 @@ try {
         check(Presets::contrast($p['accent'], $p['bg']) >= 3, "$id accent contrast", (string)round(Presets::contrast($p['accent'], $p['bg']), 2));
         check(Presets::contrast($p['accent'], Presets::inkFor($p['accent'])) >= 4.5, "$id button text contrast");
     }
-    check(count(Presets::all()) === 10, 'ten presets');
+    check(count(Presets::all()) === 12, 'twelve presets');
+    check(count(array_filter(Presets::all(), static fn($p) => $p['layout'] === 'paddock')) === 2, 'two presets use the Paddock layout');
 
     echo "Markdown\n";
     $html = Markdown::render("Hello <script>alert(1)</script> **bold** [x](javascript:alert(1)) [ok](https://example.com)\n\nhttps://youtu.be/dQw4w9WgXcQ\n\n![alt](/uploads/a.jpg)");
@@ -278,6 +279,17 @@ try {
     check($r['ok'] && Db::val("SELECT mail_status FROM messages WHERE ip_hash = '" . substr(hash('sha256', '198.51.100.10' . rp_config()['secret']), 0, 32) . "'") === 'failed', 'a failed email still saves the message and marks it');
     Mailer::$transport = null;
     Db::run('DELETE FROM messages');
+
+    echo "Paddock layout\n";
+    $prevPreset = Settings::get('preset', 'rally');
+    Settings::set('preset', 'paddock');
+    Settings::set('hero_labels', 'Enduro · E-MTB · Downhill');
+    $b = Site::response('/')['body'];
+    check(str_contains($b, 'data-design="paddock"') && str_contains($b, '--s-accent:#E48B5E'), 'the Paddock preset sets its layout and copper accent');
+    check(str_contains($b, '<span class="labels">Enduro · E-MTB · Downhill</span>'), 'the small line under the name is shown');
+    Settings::set('hero_labels', '');
+    check(!str_contains(Site::response('/')['body'], 'class="labels"'), 'and left out when empty');
+    Settings::set('preset', $prevPreset);
 
     echo "Changelog\n";
     $hist = Changelog::entries();

@@ -330,3 +330,60 @@ a.sp:hover { border-color: var(--s-accent); }
 .notice a { color: inherit; }
 .notice .btn { border-color: currentColor; color: inherit; background: transparent; }
 .site[data-design="sunday"] .notice { border: 2px solid var(--s-outline); box-shadow: 4px 4px 0 var(--s-outline); }
+
+/* --- Paddock: dark photographic page, name set large at the bottom right, copper accent --- */
+.site .labels { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--s-muted); margin: 0 0 18px; }
+.site[data-design="paddock"] {
+  --f-display: "Archivo", "Arial Narrow", Impact, sans-serif;
+  --h-weight: 800; --h-stretch: 100%; --h-case: uppercase; --h-track: -.012em; --h-lh: .9;
+  --h1-size: clamp(3.4rem, 11.5vw, 9.4rem); --h2-size: clamp(2.2rem, 5.4vw, 3.6rem);
+  --h3-w: 700; --h3-size: 1.2rem;
+  --rad: 14px; --btn-rad: 999px; --chip-rad: 6px;
+  --nav-bg: color-mix(in srgb, var(--s-bg) 72%, transparent); --sech-bd: 1px solid var(--s-line);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.site[data-design="paddock"] .mark { font-size: 1rem; letter-spacing: .04em; }
+.site[data-design="paddock"] .snav a.l { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; }
+.site[data-design="paddock"] .snav .btn.primary { background: var(--s-fg); border-color: var(--s-fg); color: var(--s-bg); border-radius: 6px; font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; }
+.site[data-design="paddock"] .hero { position: relative; display: flex; align-items: flex-end; min-height: min(94vh, 900px); overflow: hidden; }
+.site[data-design="paddock"] .hero-in { display: block; position: static; width: 100%; padding-block: 150px 56px; }
+.site[data-design="paddock"] .hero-media { position: static; }
+.site[data-design="paddock"] .hero-photo { position: absolute; inset: 0; border-radius: 0; aspect-ratio: auto; box-shadow: none; border: 0; }
+.site[data-design="paddock"] .hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, var(--s-bg) 2%, color-mix(in srgb, var(--s-bg) 30%, transparent) 58%, color-mix(in srgb, var(--s-bg) 60%, transparent) 100%); }
+.site[data-design="paddock"] .sticker { z-index: 1; top: 88px; right: 20px; }
+.site[data-design="paddock"] .hero-media .credit-tag { left: 20px; right: auto; bottom: 14px; }
+.site[data-design="paddock"] .hero-copy { position: relative; z-index: 1; margin-left: auto; max-width: 760px; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.site[data-design="paddock"] .hero h1 { order: 1; margin: 0 0 14px; }
+.site[data-design="paddock"] .hero .eyebrow { order: 2; font-family: var(--f-display); font-weight: 800; font-size: clamp(1.15rem, 2.8vw, 1.9rem); letter-spacing: .01em; color: var(--s-accent); margin-bottom: 14px; }
+.site[data-design="paddock"] .hero .labels { order: 3; }
+.site[data-design="paddock"] .hero .lede { order: 4; max-width: 52ch; color: var(--s-fg); opacity: .92; }
+.site[data-design="paddock"] .hero .socials { order: 5; justify-content: flex-end; }
+.site[data-design="paddock"] .hero .btn { order: 6; }
+.site[data-design="paddock"] .hero .btn.primary::after { content: "\2192"; display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: -10px; border-radius: 50%; background: rgba(0, 0, 0, .18); }
+.site[data-design="paddock"] .chip { background: color-mix(in srgb, var(--s-bg) 55%, transparent); border-color: var(--s-line); font-family: var(--f-mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; backdrop-filter: blur(6px); }
+.site[data-design="paddock"] .chip:hover { border-color: var(--s-accent); color: var(--s-accent); }
+.site[data-design="paddock"] .sec { padding-block: clamp(48px, 8vw, 100px) 0; }
+.site[data-design="paddock"] .sec .in { max-width: 1120px; }
+.site[data-design="paddock"] .sec-h { align-items: flex-end; padding-top: 24px; }
+.site[data-design="paddock"] .kicker, .site[data-design="paddock"] .tier, .site[data-design="paddock"] .date { color: var(--s-accent); }
+.site[data-design="paddock"] .stats { gap: 24px; }
+.site[data-design="paddock"] .stat { background: transparent; border: 0; border-top: 2px solid var(--s-accent); border-radius: 0; padding: 16px 0 0; }
+.site[data-design="paddock"] .stat b { font-size: clamp(2.6rem, 6vw, 4.6rem); }
+.site[data-design="paddock"] .sp, .site[data-design="paddock"] .stat { box-shadow: none; }
+.site[data-design="paddock"] .sp { background: var(--s-surface); }
+.site[data-design="paddock"] a.sp:hover { border-color: var(--s-accent); }
+.site[data-design="paddock"] .card .ph { border-radius: var(--rad); }
+.site[data-design="paddock"] .card:hover h3 { color: var(--s-accent); text-decoration: none; }
+.site[data-design="paddock"] .faq summary { font-family: var(--f-display); font-weight: 700; font-size: 1.3rem; text-transform: uppercase; letter-spacing: .005em; }
+.site[data-design="paddock"] .contact { border: 1px solid var(--s-line); }
+.site[data-design="paddock"] .contact h2 { color: var(--s-fg); }
+.site[data-design="paddock"] .c-form .btn { background: var(--s-accent); border-color: var(--s-accent); color: var(--s-accent-ink); }
+.site[data-design="paddock"] .notice { background: var(--s-surface); color: var(--s-fg); border: 1px solid var(--s-line); }
+.site[data-design="paddock"] .foot { border-top: 1px solid var(--s-line); margin-top: 72px; }
+@media (max-width: 820px) {
+  .site[data-design="paddock"] .hero { min-height: 88vh; }
+  .site[data-design="paddock"] .hero-in { padding-block: 130px 40px; }
+  .site[data-design="paddock"] .hero-copy { align-items: flex-start; text-align: left; }
+  .site[data-design="paddock"] .hero .socials { justify-content: flex-start; }
+  .site[data-design="paddock"] .sticker { top: 120px; }
+}

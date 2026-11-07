@@ -8,6 +8,7 @@ $types = social_types();
     <div class="hero-copy">
       <?php if ($p['tagline'] !== ''): ?><span class="eyebrow"><?= e($p['tagline']) ?></span><?php endif; ?>
       <h1><span class="n1"><?= e($parts[0]) ?></span><?php if (!empty($parts[1])): ?> <span class="n2"><?= e($parts[1]) ?></span><?php endif; ?></h1>
+      <?php if ($p['labels'] !== ''): ?><span class="labels"><?= e($p['labels']) ?></span><?php endif; ?>
       <?php if ($p['bio'] !== ''): ?><p class="lede"><?= nl2br(e($p['bio'])) ?></p><?php endif; ?>
       <?php if ($socials): ?>
         <div class="socials">

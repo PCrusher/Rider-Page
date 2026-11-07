@@ -3,6 +3,12 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.14.0
+
+- **New layout "Paddock"** with two presets, *Paddock* (copper accent) and *Paddock Ice* (ice blue). A dark, photographic page: the main photo fills the top of the page, the name is set very large at the bottom right, the tagline follows in the accent colour, and the discipline line in small mono type. Sections have thin divider lines and large uppercase headings, results show as big numbers with an accent line, buttons are pills with an arrow, and the menu has a light button on a dark bar. A fine grain texture sits behind everything. On phones the text is left-aligned.
+- **Small line under the name** (*Profile*): optional, for example your disciplines ("Enduro · E-MTB · Downhill"). It is shown in small type in every layout, and is empty until you fill it in.
+- 12 designs on 5 layouts now. No database change.
+
 ## 0.13.0
 
 - **Two-factor login.** Under *Account* you can set up an authenticator app (Google Authenticator, Microsoft Authenticator, Aegis, 1Password and others): scan the QR code, confirm with a code, and save ten one-time recovery codes. After that, the login asks for a code after the password. A code works once, and wrong codes are limited. Switching it off or making new recovery codes needs the password and a code. The secret is stored encrypted with a key that is not in the database.

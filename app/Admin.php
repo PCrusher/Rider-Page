@@ -14,6 +14,7 @@ final class Admin
         return [
             ['name', 'Name', 'text', 'required' => true, 'hint' => 'Shown in the menu and as the page title.'],
             ['tagline', 'Tagline', 'text', 'hint' => 'For example: Gravel · XC marathon · Gothenburg'],
+            ['hero_labels', 'Small line under the name', 'text', 'hint' => 'Optional, for example your disciplines: Enduro · E-MTB · Downhill · Gravel. Shown in small type.'],
             ['bio', 'Short introduction', 'textarea', 'rows' => 4],
             ['hero_image', 'Main photo', 'image', 'hint' => 'A portrait or action photo. JPG, PNG or WebP.'],
             ['hero_credit', 'Main photo: photographer', 'text', 'hint' => 'Optional photo credit, shown on the photo. Leave empty for none.'],

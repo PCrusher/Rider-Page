@@ -415,6 +415,7 @@ final class Site
         $p = [
             'name' => $g('name', 'Your Name'),
             'tagline' => $g('tagline'),
+            'labels' => $g('hero_labels'),
             'bio' => $g('bio'),
             'hero' => $g('hero_image'),
             'sticker' => $g('sticker'),
