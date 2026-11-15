@@ -58,7 +58,7 @@ Open `/admin` on your site.
 | Updates | Check for and install new versions; shows what is new and the history of every version |
 | Statistics | Cookie-free visit statistics: views, visitors, sources, devices, clicks on partner and social links |
 | Cookie notice | An optional bar that informs visitors about cookies and data |
-| Messages, Email | Inbox for the contact form; SMTP settings so messages reach you reliably |
+| Messages, Email | Inbox for the contact form with a Spam tab for suspicious messages; SMTP settings so messages reach you reliably |
 | Pages, Legal pages | Own pages (about, legal notice, privacy). Guided set-up of the legal pages for your country, as drafts you review and publish |
 | Users | Add people and give them a level: Admin, Editor or Author (admins only) |
 | Account | Change your name, email and password; see and end your logins; two-factor login; show a QR code to log in on your phone |
@@ -148,7 +148,7 @@ tests/           smoke tests
 - Designs have light or dark palettes by preset; there is no automatic switch to the visitor's dark mode yet.
 - Fonts are the Latin subset (covers English, German, Scandinavian, French, Spanish and similar).
 - Logos must be PNG, JPG or WebP (no SVG, for security).
-- The contact form has no captcha. It uses a hidden trap field, timing and rate limits, which stops most bots.
+- The contact form has no captcha. It uses a hidden trap field, timing, rate limits, an invisible proof-of-work puzzle and a spam score that moves suspicious messages to a Spam tab. A determined human sender can still get through.
 - The admin area is in English; the public page texts are English or German.
 
 ## License

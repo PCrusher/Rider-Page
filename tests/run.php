@@ -280,6 +280,67 @@ try {
     Mailer::$transport = null;
     Db::run('DELETE FROM messages');
 
+    echo "Contact form spam filter\n";
+    $sent = [];
+    Mailer::$transport = static function (array $m) use (&$sent): array {
+        $sent[] = $m;
+        return [true, ''];
+    };
+    $solve = static function (string $token): string {
+        for ($n = 0; $n < 5000000; $n++) {
+            if (Contact::powOk($token, (string)$n)) {
+                return (string)$n;
+            }
+        }
+        return '';
+    };
+    $tok = Contact::token(time() - 10);
+    $good = ['name' => 'Pat Visitor', 'email' => 'pat@example.org', 'message' => 'Hello, I would like to talk about a partnership.', 'website' => '', 't' => $tok[0], 's' => $tok[1], 'pw' => $solve($tok[1])];
+    check($good['pw'] !== '' && !Contact::powOk($tok[1], 'abc') && !Contact::powOk($tok[1], ''), 'the puzzle can be solved and wrong answers fail');
+    check(str_contains(Site::response('/')['body'], 'name="pw"') && str_contains(Site::response('/')['body'], 'data-pow="4"'), 'the form carries the puzzle field');
+    check(Contact::submit($good, '192.0.2.21')['ok'] && count($sent) === 1 && (int)Db::val('SELECT spam FROM messages') === 0, 'a normal message with a solved puzzle goes to the inbox and is emailed');
+
+    $seo = $good;
+    $seo['name'] = 'Emma Smith';
+    $seo['email'] = 'emma.smith@gmail.com';
+    $seo['message'] = 'Hi, I checked your website and our SEO team can fix the slow load time and get more organic traffic for you. Free audit?';
+    $r = Contact::submit($seo, '192.0.2.22');
+    check($r['ok'] && count($sent) === 1, 'a sales pitch looks accepted to the sender but is not emailed');
+    check((int)Db::val("SELECT COUNT(*) FROM messages WHERE spam = 1 AND mail_status = 'held' AND email = 'emma.smith@gmail.com'") === 1, 'the sales pitch is held in the spam tab with its reasons');
+    check(str_contains((string)Db::val('SELECT spam_reasons FROM messages WHERE spam = 1'), 'sales wording'), 'the reason is saved');
+
+    $nopw = $good;
+    $nopw['pw'] = '';
+    $nopw['email'] = 'lee@example.net';
+    $nopw['message'] = 'Hi, we are planning a race next spring and would like to invite you.';
+    Contact::submit($nopw, '192.0.2.23');
+    check((int)Db::val("SELECT spam FROM messages WHERE email = 'lee@example.net'") === 0 && count($sent) === 2, 'a normal message without the puzzle (no script, plain http) is still delivered');
+    $direct = $seo;
+    $direct['pw'] = '';
+    $direct['email'] = 'sophia@gmail.com';
+    $direct['message'] = 'Please check https://rank.example for SEO and web design help.';
+    Contact::submit($direct, '192.0.2.24');
+    check((int)Db::val("SELECT spam FROM messages WHERE email = 'sophia@gmail.com'") === 1, 'a direct post with a link and sales wording and no puzzle is spam');
+    $spoof = $good;
+    $spoof['email'] = 'x@mailinator.com';
+    $spoof['pw'] = '';
+    Contact::submit($spoof, '192.0.2.25');
+    check((int)Db::val("SELECT spam FROM messages WHERE email = 'x@mailinator.com'") === 1, 'a throwaway address without the puzzle is spam');
+    $dup = $good;
+    $dup['email'] = 'someone.else@example.org';
+    Contact::submit($dup, '192.0.2.26');
+    $dup['email'] = 'third@example.org';
+    $dup['pw'] = '';
+    Contact::submit($dup, '192.0.2.27');
+    check((int)Db::val("SELECT spam FROM messages WHERE email = 'third@example.org'") === 1, 'the same text from another address without the puzzle is spam');
+
+    $id = (int)Db::val("SELECT id FROM messages WHERE email = 'emma.smith@gmail.com'");
+    $before = count($sent);
+    Contact::deliver($id);
+    check(count($sent) === $before + 1 && Db::val('SELECT mail_status FROM messages WHERE id = ' . $id) === 'sent', '"Not spam" sends the held message by email');
+    Mailer::$transport = null;
+    Db::run('DELETE FROM messages');
+
     echo "Paddock layout\n";
     $prevPreset = Settings::get('preset', 'rally');
     Settings::set('preset', 'paddock');

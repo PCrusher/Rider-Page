@@ -3,6 +3,13 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.15.0
+
+- **Spam tab in Messages.** Every message from the contact form gets spam points: sales wording (SEO, traffic, "your website" ...), your own domain named in the text, links, throwaway email addresses, a link or address in the name, the same text sent by another address, and a form that was not completed by a browser. At 50 points or more the message is **kept in a Spam tab and not emailed to you**. There you can press *Not spam* (it moves to the inbox and is emailed now), delete one, or *Delete all spam*. Spam is deleted after 30 days. The sender still sees the normal thank-you, so bots do not adapt.
+- **Invisible proof of work.** The page solves a small puzzle in the background while the visitor types (about a second, nothing to click, no third party, no cookie). Bots that post the form directly do not solve it. A message without it is not refused, it only gets points, so visitors without scripts or on plain http are not lost.
+- Messages from the spam filter do not count towards the 40-per-hour limit, so a flood of spam can not block real visitors.
+- Adds the columns `spam`, `spam_score` and `spam_reasons` to `messages`.
+
 ## 0.14.0
 
 - **New layout "Paddock"** with two presets, *Paddock* (copper accent) and *Paddock Ice* (ice blue). A dark, photographic page: the main photo fills the top of the page, the name is set very large at the bottom right, the tagline follows in the accent colour, and the discipline line in small mono type. Sections have thin divider lines and large uppercase headings, results show as big numbers with an accent line, buttons are pills with an arrow, and the menu has a light button on a dark bar. A fine grain texture sits behind everything. On phones the text is left-aligned.

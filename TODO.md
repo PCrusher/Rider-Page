@@ -23,8 +23,7 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 ## Features
 
 - [ ] Dark variants of the presets, optional automatic switch to the visitor's dark mode
-- [!] Contact form spam: score messages (SEO pitch wording, the own domain named in the text, links, disposable email domains, the same text from several senders) and keep suspicious ones in a *Spam* tab without emailing them, with "Not spam" and "Delete all"
-- [!] Contact form spam: invisible proof-of-work plus a token set by script (own code, no third party), so bots that post directly are refused
+- [ ] Contact form spam: let the owner edit the word list and the score limit; learn from "Not spam" clicks; email digest of held messages
 - [ ] Contact form spam: optional question that the owner writes ("Which sport is this page about?") as a simple human check
 - [ ] Contact form spam: optional email confirmation for borderline messages only; not for everyone, because real sponsors would drop out
 - [ ] Contact form: optional privacy-policy link and consent checkbox, optional automatic reply to the visitor, optional captcha (privacy-friendly) for sites with heavy spam
@@ -124,3 +123,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.12.0: cookie-free visit statistics in the admin, optional cookie notice
 - 0.13.0: two-factor login (TOTP with recovery codes), forgot password with email link and recovery file, security emails
 - 0.14.0: Paddock layout (dark photo hero, name bottom right, copper or ice accent) and a small line under the name
+- 0.15.0: spam score with a Spam tab for the contact form (held, not emailed), invisible proof-of-work puzzle

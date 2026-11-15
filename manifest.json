@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "New layout \"Paddock\": dark photo hero with the name set large at the bottom right, copper or ice-blue accent, grain texture and small mono labels. Two new presets and an optional small line under the name.",
+  "changelog": "Spam tab for the contact form: suspicious messages are kept apart and not emailed, with Not spam and Delete all. An invisible proof-of-work puzzle (no captcha, no third party) stops bots that post directly.",
   "warnings": []
 }

@@ -419,7 +419,7 @@ final class Admin
     private static function unreadCount(): int
     {
         try {
-            return (int)Db::val("SELECT COUNT(*) FROM messages WHERE read_at = ''");
+            return (int)Db::val("SELECT COUNT(*) FROM messages WHERE spam = 0 AND read_at = ''");
         } catch (Throwable) {
             return 0;
         }
@@ -1125,24 +1125,42 @@ final class Admin
     private static function messages(string $act, bool $post): void
     {
         if ($post && $act === 'delete') {
+            $m = Db::row('SELECT spam FROM messages WHERE id = ?', [(int)($_POST['id'] ?? 0)]);
             Db::delete('messages', 'id = ?', [(int)($_POST['id'] ?? 0)]);
             flash('Message deleted.');
+            redirect('/admin/messages' . ($m && (int)$m['spam'] === 1 ? '?tab=spam' : ''));
+        }
+        if ($post && $act === 'notspam') {
+            $id = (int)($_POST['id'] ?? 0);
+            if (Db::row('SELECT id FROM messages WHERE id = ? AND spam = 1', [$id])) {
+                Db::update('messages', ['spam' => 0, 'mail_status' => 'pending'], 'id = ?', [$id]);
+                Contact::deliver($id);
+                flash('Moved to the inbox and emailed to you.');
+            }
             redirect('/admin/messages');
+        }
+        if ($post && $act === 'deletespam') {
+            $n = Db::run('DELETE FROM messages WHERE spam = 1')->rowCount();
+            flash($n . ' spam message' . ($n === 1 ? '' : 's') . ' deleted.');
+            redirect('/admin/messages?tab=spam');
         }
         if ($act === 'view') {
             $m = Db::row('SELECT * FROM messages WHERE id = ?', [(int)($_GET['id'] ?? 0)]);
             if (!$m) {
                 redirect('/admin/messages');
             }
-            if ($m['read_at'] === '') {
+            if ($m['read_at'] === '' && (int)$m['spam'] === 0) {
                 Db::update('messages', ['read_at' => now()], 'id = ?', [(int)$m['id']]);
             }
             self::view('message', ['m' => $m], 'Message');
             return;
         }
+        $tab = ($_GET['tab'] ?? '') === 'spam' ? 'spam' : 'inbox';
         self::view('messages', [
-            'rows' => Db::rows('SELECT * FROM messages ORDER BY id DESC LIMIT 200'),
+            'rows' => Db::rows('SELECT * FROM messages WHERE spam = ? ORDER BY id DESC LIMIT 200', [$tab === 'spam' ? 1 : 0]),
             'hasEmail' => trim((string)Settings::get('email', '')) !== '',
+            'tab' => $tab,
+            'spamCount' => (int)Db::val('SELECT COUNT(*) FROM messages WHERE spam = 1'),
         ], 'Messages');
     }
 

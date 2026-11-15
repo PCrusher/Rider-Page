@@ -6,7 +6,7 @@
         <h2><?= e($p['contact_title']) ?></h2>
         <p><?= e($p['contact_text']) ?></p>
       </div>
-      <form class="c-form" method="post" action="<?= e(url('/contact')) ?>">
+      <form class="c-form" method="post" action="<?= e(url('/contact')) ?>" data-pow="<?= (int)Contact::POW_ZEROS ?>">
         <?php if ($sent): ?><p class="form-note" role="status"><?= e(t('contact.sent')) ?></p><?php endif; ?>
         <?php if ($contactState['error'] !== ''): ?><p class="form-note err" role="alert"><?= e(t('contact.err.' . $contactState['error'])) ?></p><?php endif; ?>
         <label for="c-name"><?= e(t('contact.name')) ?></label>
@@ -18,6 +18,7 @@
         <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
         <input type="hidden" name="t" value="<?= e($formToken[0]) ?>">
         <input type="hidden" name="s" value="<?= e($formToken[1]) ?>">
+        <input type="hidden" name="pw" value="">
         <button class="btn" type="submit"><?= e(t('contact.send')) ?></button>
         <p class="c-note"><?= e(t('contact.note')) ?></p>
       </form>

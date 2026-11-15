@@ -19,6 +19,48 @@
     if (t) { track(t); }
   });
 
+  /* Contact form: an invisible puzzle solved by the browser (no third party, no cookie). Bots that post the form directly
+     do not solve it, and their messages go to the Spam tab. Without it the form still works. */
+  (function () {
+    var form = document.querySelector('form.c-form[data-pow]');
+    if (!form || !window.crypto || !crypto.subtle || !window.TextEncoder) { return; }
+    var zeros = parseInt(form.getAttribute('data-pow'), 10) || 4;
+    var token = form.querySelector('input[name="s"]');
+    var out = form.querySelector('input[name="pw"]');
+    if (!token || !out) { return; }
+    var enc = new TextEncoder();
+    var prefix = new Array(zeros + 1).join('0');
+    var solved = null;
+    var waiting = false;
+    function solve() {
+      var n = 0;
+      function step() {
+        var tries = [];
+        for (var i = 0; i < 500; i++, n++) {
+          tries.push(crypto.subtle.digest('SHA-256', enc.encode(token.value + ':' + n)).then((function (k) {
+            return function (buf) {
+              var b = new Uint8Array(buf), hex = '';
+              for (var j = 0; j < 3; j++) { hex += ('0' + b[j].toString(16)).slice(-2); }
+              return hex.indexOf(prefix) === 0 ? k : -1;
+            };
+          })(n)));
+        }
+        return Promise.all(tries).then(function (r) {
+          for (var i = 0; i < r.length; i++) { if (r[i] >= 0) { return r[i]; } }
+          return step();
+        });
+      }
+      return step();
+    }
+    solved = solve().then(function (n) { out.value = String(n); return true; }, function () { return false; });
+    form.addEventListener('submit', function (e) {
+      if (out.value !== '' || waiting) { return; }
+      e.preventDefault();
+      waiting = true;
+      solved.then(function () { form.submit(); });
+    });
+  })();
+
   /* Click-to-load YouTube: nothing is requested from YouTube until the visitor presses play. */
   document.addEventListener('click', function (e) {
     var play = e.target.closest('.video .play');
