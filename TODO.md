@@ -23,6 +23,10 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 ## Features
 
 - [ ] Dark variants of the presets, optional automatic switch to the visitor's dark mode
+- [!] Contact form spam: score messages (SEO pitch wording, the own domain named in the text, links, disposable email domains, the same text from several senders) and keep suspicious ones in a *Spam* tab without emailing them, with "Not spam" and "Delete all"
+- [!] Contact form spam: invisible proof-of-work plus a token set by script (own code, no third party), so bots that post directly are refused
+- [ ] Contact form spam: optional question that the owner writes ("Which sport is this page about?") as a simple human check
+- [ ] Contact form spam: optional email confirmation for borderline messages only; not for everyone, because real sponsors would drop out
 - [ ] Contact form: optional privacy-policy link and consent checkbox, optional automatic reply to the visitor, optional captcha (privacy-friendly) for sites with heavy spam
 - [ ] Messages: search, export as CSV, mark as unread, email notification digests
 - [ ] Logo upload as SVG, cleaned of scripts on upload
