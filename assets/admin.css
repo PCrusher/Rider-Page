@@ -170,3 +170,8 @@ td img.thumb { height: 36px; width: auto; max-width: 90px; object-fit: cover; bo
 
 /* recovery codes */
 .codes { background: var(--code-bg); border-radius: 8px; padding: 14px 16px; font: 600 1rem/1.7 ui-monospace, Menlo, monospace; letter-spacing: .06em; columns: 2; column-gap: 28px; margin: 8px 0 14px; white-space: pre; overflow-x: auto; }
+
+.upd-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #f59e0b; color: #1b1300; font-size: .7rem; font-weight: 700; letter-spacing: .03em; vertical-align: 1px; }
+.bulk { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.tbl-wrap td.sel, .tbl-wrap th.sel { width: 36px; padding-right: 0; }
+.tbl-wrap input[type="checkbox"] { width: 18px; height: 18px; }

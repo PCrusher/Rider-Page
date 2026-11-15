@@ -3,6 +3,12 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.16.0
+
+- **Update notice in the menu.** When an admin opens the admin area, the page checks GitHub for a new version in the background (at most once every 6 hours, never slowing the page down). If a newer version exists, *Updates* in the menu gets an amber *New* badge. A failed check is ignored quietly.
+- **Select several messages.** In *Messages* every row has a checkbox, with one to select all. *Delete* removes the selected messages; in the Spam tab, *Not spam* moves the selected ones to the inbox and emails them to you.
+- No database change.
+
 ## 0.15.0
 
 - **Spam tab in Messages.** Every message from the contact form gets spam points: sales wording (SEO, traffic, "your website" ...), your own domain named in the text, links, throwaway email addresses, a link or address in the name, the same text sent by another address, and a form that was not completed by a browser. At 50 points or more the message is **kept in a Spam tab and not emailed to you**. There you can press *Not spam* (it moves to the inbox and is emailed now), delete one, or *Delete all spam*. Spam is deleted after 30 days. The sender still sees the normal thank-you, so bots do not adapt.

@@ -27,6 +27,14 @@ $items = [
 ];
 $items = array_values(array_filter($items, static fn($i) => Roles::can($role, $i[0])));
 $lastGroup = '';
+// Update notice in the menu: from the cached check; the page script refreshes it in the background when it is old.
+$updNewer = false;
+$updStale = false;
+if (Roles::can($role, 'update') && Updater::repo() !== '') {
+    $uc = Updater::cached();
+    $updNewer = $uc && !empty($uc['ok']) && !empty($uc['newer']) && version_compare((string)$uc['version'], Updater::version(), '>');
+    $updStale = !$uc || ($uc['repo'] ?? '') !== Updater::repo() || time() - (int)($uc['checked'] ?? 0) >= 21600;
+}
 $current = 'Dashboard';
 foreach ($items as $it) {
     if ($it[0] === $section) {
@@ -42,7 +50,7 @@ foreach ($items as $it) {
 <meta name="robots" content="noindex, nofollow">
 <title><?= e($title) ?> – Rider Page</title>
 <link rel="stylesheet" href="<?= e(asset('admin.css')) ?>">
-<script src="<?= e(asset('admin.js')) ?>" defer></script>
+<script src="<?= e(asset('admin.js')) ?>" defer<?= $updStale ? ' data-update-ping="' . e(url('/admin/update/ping')) . '"' : '' ?>></script>
 <noscript><style>.side-nav { display: flex !important; } .menu-btn { display: none !important; }</style></noscript>
 </head>
 <body>
@@ -56,7 +64,7 @@ foreach ($items as $it) {
     <nav class="side-nav" id="side-nav" aria-label="Admin menu">
       <?php foreach ($items as [$key, $label, $href, $group]): ?>
         <?php if ($group !== '' && $group !== $lastGroup): $lastGroup = $group; ?><div class="grp"><?= e($group) ?></div><?php endif; ?>
-        <a class="nav" href="<?= e(url($href)) ?>"<?= $section === $key ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
+        <a class="nav" href="<?= e(url($href)) ?>"<?= $section === $key ? ' aria-current="page"' : '' ?><?= $key === 'update' ? ' data-nav-update' : '' ?>><?= e($label) ?><?= $key === 'update' && $updNewer ? ' <span class="upd-badge">New</span>' : '' ?></a>
       <?php endforeach; ?>
       <div class="foot">
         <a class="nav" href="<?= e(url('/')) ?>" target="_blank" rel="noopener">View site ↗</a>

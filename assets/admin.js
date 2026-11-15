@@ -7,6 +7,32 @@
     if (msg && !window.confirm(msg)) { e.preventDefault(); }
   });
 
+  /* Check for a new version in the background and mark "Updates" in the menu. */
+  var me = document.currentScript;
+  var ping = me && me.dataset.updatePing;
+  if (ping && window.fetch) {
+    fetch(ping, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var link = document.querySelector('[data-nav-update]');
+        if (d && d.newer && link && !link.querySelector('.upd-badge')) {
+          var b = document.createElement('span');
+          b.className = 'upd-badge';
+          b.textContent = 'New';
+          link.appendChild(document.createTextNode(' '));
+          link.appendChild(b);
+        }
+      })
+      .catch(function () { /* a failed check must never disturb the admin */ });
+  }
+
+  /* Messages: select all rows. */
+  document.addEventListener('change', function (e) {
+    if (e.target.matches && e.target.matches('[data-select-all]')) {
+      document.querySelectorAll('input[name="ids[]"]').forEach(function (c) { c.checked = e.target.checked; });
+    }
+  });
+
   /* Mobile menu: the button opens and closes the list of pages. */
   var side = document.getElementById('side');
   var menuBtn = side && side.querySelector('.menu-btn');

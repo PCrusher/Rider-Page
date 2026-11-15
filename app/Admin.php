@@ -1139,6 +1139,30 @@ final class Admin
             }
             redirect('/admin/messages');
         }
+        if ($post && $act === 'bulk') {
+            $ids = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['ids'] ?? [])), static fn($i) => $i > 0)));
+            $spamTab = ($_POST['tab'] ?? '') === 'spam';
+            if (!$ids) {
+                flash('Nothing selected.', 'error');
+            } elseif (($_POST['do'] ?? '') === 'notspam') {
+                $n = 0;
+                foreach ($ids as $id) {
+                    if (Db::row('SELECT id FROM messages WHERE id = ? AND spam = 1', [$id])) {
+                        Db::update('messages', ['spam' => 0, 'mail_status' => 'pending'], 'id = ?', [$id]);
+                        Contact::deliver($id);
+                        $n++;
+                    }
+                }
+                flash($n . ' message' . ($n === 1 ? '' : 's') . ' moved to the inbox and emailed to you.');
+            } else {
+                $n = 0;
+                foreach (array_chunk($ids, 200) as $chunk) {
+                    $n += Db::run('DELETE FROM messages WHERE id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')', $chunk)->rowCount();
+                }
+                flash($n . ' message' . ($n === 1 ? '' : 's') . ' deleted.');
+            }
+            redirect('/admin/messages' . ($spamTab ? '?tab=spam' : ''));
+        }
         if ($post && $act === 'deletespam') {
             $n = Db::run('DELETE FROM messages WHERE spam = 1')->rowCount();
             flash($n . ' spam message' . ($n === 1 ? '' : 's') . ' deleted.');
@@ -1299,6 +1323,11 @@ final class Admin
 
     private static function update(string $act, bool $post): void
     {
+        if ($act === 'ping' && !$post) {
+            // Called by the admin pages in the background (at most one GitHub request per 6 hours).
+            $l = Updater::latest(false);
+            json_out(['newer' => !empty($l['ok']) && !empty($l['newer']), 'version' => (string)($l['version'] ?? '')]);
+        }
         if ($act === 'check' && $post) {
             Updater::latest(true);
             redirect('/admin/update');

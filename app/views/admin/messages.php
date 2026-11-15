@@ -13,15 +13,22 @@
 <?php if (!$rows): ?>
   <div class="box muted"><?= $tab === 'spam' ? 'No spam caught.' : 'No messages yet.' ?></div>
 <?php else: ?>
+<form id="bulk" method="post" action="<?= e(url('/admin/messages/bulk')) ?>" class="bulk" data-confirm="Apply to the selected messages? Deleting can not be undone.">
+  <?= csrf_field() ?><input type="hidden" name="tab" value="<?= e($tab) ?>">
+  <span class="muted small">Selected:</span>
+  <?php if ($tab === 'spam'): ?><button class="btn sm" type="submit" name="do" value="notspam">Not spam</button><?php endif; ?>
+  <button class="btn sm danger" type="submit" name="do" value="delete">Delete</button>
+</form>
 <?php if ($tab === 'spam'): ?>
   <form method="post" action="<?= e(url('/admin/messages/deletespam')) ?>" data-confirm="Delete all spam messages?"><?= csrf_field() ?><button class="btn danger" type="submit">Delete all spam</button></form>
 <?php endif; ?>
 <div class="tbl-wrap">
 <table>
-  <thead><tr><th>From</th><th>Message</th><th>Date</th><th><?= $tab === 'spam' ? 'Why' : 'Email' ?></th><th></th></tr></thead>
+  <thead><tr><th class="sel"><input type="checkbox" data-select-all aria-label="Select all"></th><th>From</th><th>Message</th><th>Date</th><th><?= $tab === 'spam' ? 'Why' : 'Email' ?></th><th></th></tr></thead>
   <tbody>
   <?php foreach ($rows as $m): ?>
     <tr>
+      <td class="sel"><input type="checkbox" name="ids[]" value="<?= (int)$m['id'] ?>" form="bulk" aria-label="Select message from <?= e($m['name']) ?>"></td>
       <td><?= $m['read_at'] === '' && $tab === 'inbox' ? '<b>' . e($m['name']) . '</b>' : e($m['name']) ?><div class="muted small"><?= e($m['email']) ?></div></td>
       <td class="muted"><?= e(mb_strimwidth(str_replace("\n", ' ', (string)$m['body']), 0, 80, '…')) ?></td>
       <td class="muted small"><?= e(substr((string)$m['created_at'], 0, 16)) ?></td>
