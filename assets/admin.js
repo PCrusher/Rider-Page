@@ -26,6 +26,12 @@
       .catch(function () { /* a failed check must never disturb the admin */ });
   }
 
+  /* Keep the location database up to date (the server only downloads when its weekly check is due). */
+  var geoPing = me && me.dataset.geoPing;
+  if (geoPing && window.fetch) {
+    fetch(geoPing, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } }).catch(function () {});
+  }
+
   /* Messages: select all rows. */
   document.addEventListener('change', function (e) {
     if (e.target.matches && e.target.matches('[data-select-all]')) {

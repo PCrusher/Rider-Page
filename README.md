@@ -56,7 +56,7 @@ Open `/admin` on your site.
 | 404 page, Redirects | Edit the page for unknown addresses; redirect old addresses to new ones; see which addresses were not found |
 | Maintenance | Switch the page offline for visitors with your own message. You still see the real site while logged in |
 | Updates | Check for and install new versions; shows what is new and the history of every version |
-| Statistics | Cookie-free visit statistics: views, visitors, sources, devices, clicks on partner and social links |
+| Statistics | Cookie-free visit statistics: views, visitors, visits by hour, optional country and city, sources, devices, clicks on partner and social links |
 | Cookie notice | An optional bar that informs visitors about cookies and data |
 | Messages, Email | Inbox for the contact form with a Spam tab for suspicious messages; SMTP settings so messages reach you reliably |
 | Pages, Legal pages | Own pages (about, legal notice, privacy). Guided set-up of the legal pages for your country, as drafts you review and publish |
@@ -99,7 +99,7 @@ The updater makes a backup before every update. For regular backups, copy the `s
 
 - Fonts are hosted by your own site. No request goes to Google when someone visits.
 - YouTube videos load only when a visitor presses play, and then from `youtube-nocookie.com`.
-- The public pages set no cookies. The visit statistics run on your own server, store no IP address and use a code that changes every day.
+- The public pages set no cookies. The visit statistics run on your own server, store no IP address and use a code that changes every day. The optional country and city lookup uses a GeoLite2 database on your server (created by [MaxMind](https://www.maxmind.com), downloaded from the GeoLite.mmdb mirror); only the result is stored.
 - The contact form stores each visitor's IP address only as a salted hash (for the rate limit). Messages contain personal data: mention the form in your privacy policy.
 - Passwords are hashed, logins are rate limited, forms are protected against cross-site requests,
   and uploaded images are re-encoded so only pixels are kept (SVG is not accepted).

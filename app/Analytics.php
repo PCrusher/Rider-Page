@@ -84,9 +84,11 @@ final class Analytics
         }
         try {
             $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+            [$cc, $country, $city] = Geo::enabled() ? Geo::lookup(client_ip()) : ['', '', ''];
             Db::insert('hits', [
                 'day' => date('Y-m-d'), 'ts' => time(), 'kind' => 'page', 'vh' => self::visitor(),
                 'path' => mb_substr($path, 0, 190), 'ref' => self::referrer(), 'dev' => self::device($ua), 'br' => self::browser($ua),
+                'cc' => $cc, 'country' => $country, 'city' => $city,
             ]);
             if (random_int(1, 100) === 1) {
                 self::prune();
@@ -163,7 +165,30 @@ final class Analytics
             "SELECT $col AS k, COUNT(*) AS n FROM hits WHERE kind = 'page' AND day >= ? GROUP BY $col ORDER BY n DESC, k LIMIT 10",
             [$since]
         );
+        // Visits by hour of the day (server time) and for the last 24 hours.
+        $byHour = array_fill(0, 24, 0);
+        $last24 = [];
+        $nowHour = (int)(floor(time() / 3600) * 3600);
+        for ($i = 23; $i >= 0; $i--) {
+            $last24[$nowHour - $i * 3600] = 0;
+        }
+        foreach (Db::rows("SELECT ts FROM hits WHERE kind = 'page' AND day >= ?", [$since]) as $r) {
+            $ts = (int)$r['ts'];
+            $byHour[(int)date('G', $ts)]++;
+            $slot = (int)(floor($ts / 3600) * 3600);
+            if (isset($last24[$slot])) {
+                $last24[$slot]++;
+            }
+        }
+        $hours24 = [];
+        foreach ($last24 as $slot => $n) {
+            $hours24[] = ['label' => date('H', $slot), 'day' => date('M j', $slot), 'views' => $n];
+        }
         return [
+            'hours' => $byHour, 'last24' => $hours24,
+            'countries' => Db::rows("SELECT cc AS k, MAX(country) AS name, COUNT(*) AS n, COUNT(DISTINCT vh) AS u FROM hits WHERE kind = 'page' AND day >= ? AND cc <> '' GROUP BY cc ORDER BY n DESC, k LIMIT 15", [$since]),
+            'cities' => Db::rows("SELECT city AS k, MAX(country) AS name, cc, COUNT(*) AS n FROM hits WHERE kind = 'page' AND day >= ? AND city <> '' GROUP BY city, cc ORDER BY n DESC, k LIMIT 15", [$since]),
+            'located' => (int)Db::val("SELECT COUNT(*) FROM hits WHERE kind = 'page' AND day >= ? AND cc <> ''", [$since]),
             'days' => $days, 'since' => $since, 'series' => $series, 'views' => $views, 'visitors' => $visitors,
             'pages' => Db::rows("SELECT path AS k, COUNT(*) AS n, COUNT(DISTINCT vh) AS u FROM hits WHERE kind = 'page' AND day >= ? GROUP BY path ORDER BY n DESC, k LIMIT 10", [$since]),
             'referrers' => $group('ref'),
@@ -181,6 +206,9 @@ final class Analytics
         return match ($what) {
             'pages' => array_map(static fn($x) => [$x['k'], $x['n'], $x['u']], $r['pages']),
             'clicks' => array_map(static fn($x) => [$x['k'], $x['n']], $r['clicks']),
+            'countries' => array_map(static fn($x) => [$x['k'], $x['name'], $x['n'], $x['u']], $r['countries']),
+            'cities' => array_map(static fn($x) => [$x['k'], $x['name'], $x['n']], $r['cities']),
+            'hours' => array_map(static fn($h, $n) => [sprintf('%02d:00', $h), $n], array_keys($r['hours']), $r['hours']),
             default => array_map(static fn($x) => [$x['day'], $x['views'], $x['visitors']], $r['series']),
         };
     }

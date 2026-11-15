@@ -3,6 +3,15 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.17.0
+
+- **Visits by hour** (*Statistics*): a chart of the last 24 hours and a chart of the busiest hours of the day over the chosen period (7, 30 or 90 days).
+- **Country and city of visitors.** Switch it on under *Statistics -> Settings -> Location*. Your server looks the visit up in a free GeoLite2 database that is stored on the server itself (`storage/geo`), so nothing is sent to anyone. The IP address is still never stored, only the country and city. Choose *City* (about 50 MB, country and city) or *Country* (about 3 MB). The *Statistics* page then lists the top countries and cities.
+- **The database is downloaded and kept up to date from the admin area** (from the GeoLite.mmdb mirror on GitHub): *Download / update now*, or automatically once a week while you use the admin area. A new file is checked before it replaces the old one. It is not part of the updates and is never touched by them.
+- CSV downloads for hours, countries and cities. The privacy templates mention the location lookup while it is on (update your pages under *Legal pages*).
+- Location is an estimate and is often a few hundred kilometres off. Earlier visits stay without a location.
+- Adds the columns `cc`, `country` and `city` to `hits`.
+
 ## 0.16.0
 
 - **Update notice in the menu.** When an admin opens the admin area, the page checks GitHub for a new version in the background (at most once every 6 hours, never slowing the page down). If a newer version exists, *Updates* in the menu gets an amber *New* badge. A failed check is ignored quietly.

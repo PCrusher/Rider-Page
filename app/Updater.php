@@ -395,7 +395,7 @@ final class Updater
     }
 
     /** @return array{ok:bool,code:int,body:string,error:string} */
-    private static function http(string $url, ?string $saveTo = null, int $timeout = 30): array
+    public static function http(string $url, ?string $saveTo = null, int $timeout = 30): array
     {
         if (!str_starts_with($url, 'https://')) {
             return ['ok' => false, 'code' => 0, 'body' => '', 'error' => 'Only https:// addresses are allowed.'];

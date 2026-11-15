@@ -601,6 +601,57 @@ try {
     Analytics::wipe();
     check((int)Db::val('SELECT COUNT(*) FROM hits') + (int)Db::val('SELECT COUNT(*) FROM hit_days') === 0, 'all statistics can be deleted');
 
+    echo "Hours and location\n";
+    $fixture = "$src/tests/data/GeoIP2-City-Test.mmdb";
+    $mm = MmdbReader::open($fixture);
+    check($mm !== null && ($mm->meta()['database_type'] ?? '') === 'GeoIP2-City', 'the database reader opens a MaxMind file');
+    [$cc, $country, $city] = Geo::fromRecord($mm?->lookup('2.125.160.216'));
+    check($cc === 'GB' && $country === 'United Kingdom' && $city === 'Boxford', 'an IPv4 address is found with country and city');
+    [$cc, , $city] = Geo::fromRecord($mm?->lookup('89.160.20.112'));
+    check($cc === 'SE' && $city === 'Linköping', 'names with special characters are read correctly');
+    check(Geo::fromRecord($mm?->lookup('1.1.1.1')) === ['', '', ''] && $mm?->lookup('not an ip') === null, 'an address that is not in the database gives nothing');
+    check(Geo::fromRecord($mm?->lookup('2001:218::'))[0] === 'JP', 'an IPv6 address is found');
+    $junk = "$tmp/junk.mmdb";
+    file_put_contents($junk, random_bytes(5000));
+    check(MmdbReader::open($junk) === null && MmdbReader::open("$tmp/missing.mmdb") === null, 'a damaged or missing file is refused without an error');
+    $cut = "$tmp/cut.mmdb";
+    file_put_contents($cut, substr((string)file_get_contents($fixture), 0, 9000) . substr((string)file_get_contents($fixture), -3000));
+    $bad = MmdbReader::open($cut);
+    $safe = true;
+    try {
+        $bad?->lookup('2.125.160.216');
+    } catch (Throwable $e) {
+        $safe = $e instanceof RuntimeException;
+    }
+    check($safe, 'a cut-off file fails with a controlled error and never crashes');
+
+    @mkdir(Geo::dir(), 0755, true);
+    copy($fixture, Geo::file());
+    Settings::setMany(['geo_on' => '1', 'geo_edition' => 'city']);
+    check(Geo::enabled() && Geo::lookup('192.168.1.5') === ['', '', ''] && Geo::lookup('127.0.0.1') === ['', '', ''], 'private addresses are not looked up');
+    $_SERVER['REMOTE_ADDR'] = '2.125.160.216';
+    Analytics::page('/');
+    $row = Db::row('SELECT * FROM hits');
+    check($row && $row['cc'] === 'GB' && $row['city'] === 'Boxford' && !str_contains((string)json_encode($row), '2.125.160.216'), 'a visit is stored with country and city but without the IP address');
+    $_SERVER['REMOTE_ADDR'] = '89.160.20.112';
+    Analytics::page('/blog');
+    Db::run("UPDATE hits SET ts = ? WHERE path = '/blog'", [time() - 3 * 3600]);
+    $rep = Analytics::report(7);
+    check(count($rep['hours']) === 24 && array_sum($rep['hours']) === 2 && count($rep['last24']) === 24 && array_sum(array_column($rep['last24'], 'views')) === 2, 'visits are counted by hour');
+    check($rep['countries'][0]['n'] === 1 && count($rep['countries']) === 2 && $rep['located'] === 2 && count($rep['cities']) === 2, 'countries and cities are listed');
+    check(count(Analytics::csv('hours', 7)) === 24 && count(Analytics::csv('countries', 7)) === 2, 'location and hours can be downloaded as CSV');
+    Settings::set('stats_on', '1');
+    check(str_contains(Legal::build('privacy-gdpr', 'dach', 'en')['body'], 'country and city of a visit'), 'the privacy policy mentions the location lookup while it is on');
+    Settings::set('geo_on', '0');
+    Db::run('DELETE FROM hits');
+    $_SERVER['REMOTE_ADDR'] = '2.125.160.216';
+    Analytics::page('/');
+    check(Db::val('SELECT cc FROM hits') === '' && !str_contains(Legal::build('privacy-gdpr', 'dach', 'en')['body'], 'country and city of a visit'), 'nothing is located while the option is off');
+    Geo::remove();
+    check(!Geo::installed(), 'the database can be removed');
+    Db::run('DELETE FROM hits');
+    $_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+
     Settings::set('stats_on', '1');
     check(str_contains(Legal::build('privacy-gdpr', 'dach', 'en')['body'], 'Visit statistics') && str_contains(Legal::build('privacy-gdpr', 'dach', 'en')['body'], 'after 90 days'), 'the privacy policy describes the statistics while they are on');
     Settings::set('stats_on', '0');

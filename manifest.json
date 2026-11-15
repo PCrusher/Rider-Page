@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "A background check for new versions marks Updates in the admin menu, and Messages can be selected and deleted in bulk.",
+  "changelog": "Statistics get charts for visits by hour and optional country and city of visitors, found with a GeoLite2 database on your own server that is downloaded and updated from the admin area. The IP address is never stored.",
   "warnings": []
 }

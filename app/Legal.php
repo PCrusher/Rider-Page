@@ -184,6 +184,7 @@ final class Legal
             'other_services' => $vars['other_services'] !== '',
             'smtp' => $vars['smtp_host'] !== '',
             'stats' => Analytics::enabled(),
+            'stats_geo' => Analytics::enabled() && Geo::enabled(),
             'dach' => $region === 'dach',
             'uk' => $region === 'uk',
             'us' => $region === 'us',

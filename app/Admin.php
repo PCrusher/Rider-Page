@@ -916,16 +916,43 @@ final class Admin
                 $d = (int)($_POST['stats_days'] ?? 90);
                 Settings::setMany(['stats_on' => !empty($_POST['stats_on']) ? '1' : '0', 'stats_days' => (string)(in_array($d, [30, 90, 365], true) ? $d : 90)]);
                 flash('Saved.');
+            } elseif ($act === 'geo') {
+                Settings::setMany([
+                    'geo_on' => !empty($_POST['geo_on']) ? '1' : '0',
+                    'geo_auto' => !empty($_POST['geo_auto']) ? '1' : '0',
+                    'geo_edition' => ($_POST['geo_edition'] ?? '') === 'country' ? 'country' : 'city',
+                ]);
+                flash('Saved.');
+            } elseif ($act === 'geoupdate') {
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_write_close();
+                }
+                ignore_user_abort(true);
+                $r = Geo::update(true);
+                flash($r['message'], $r['ok'] ? 'ok' : 'error');
+            } elseif ($act === 'georemove') {
+                Geo::remove();
+                flash('The location data was deleted from the server.');
             } elseif ($act === 'wipe') {
                 Analytics::wipe();
                 flash('All statistics were deleted.');
             }
             redirect('/admin/statistics');
         }
+        if ($act === 'geoauto') {
+            // Called in the background by the admin pages. Does nothing unless the weekly check is due.
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_write_close();
+            }
+            ignore_user_abort(true);
+            $r = Geo::due() ? Geo::update(false) : ['ok' => true, 'message' => 'not due'];
+            json_out(['ok' => $r['ok'], 'message' => $r['message']]);
+        }
         $days = (int)($_GET['d'] ?? 30);
         if ($act === 'csv') {
-            $what = in_array($_GET['what'] ?? '', ['pages', 'clicks'], true) ? (string)$_GET['what'] : 'days';
-            $head = ['pages' => ['page', 'views', 'visitors'], 'clicks' => ['target', 'clicks'], 'days' => ['day', 'views', 'visitors']][$what];
+            $what = in_array($_GET['what'] ?? '', ['pages', 'clicks', 'countries', 'cities', 'hours'], true) ? (string)$_GET['what'] : 'days';
+            $head = ['pages' => ['page', 'views', 'visitors'], 'clicks' => ['target', 'clicks'], 'days' => ['day', 'views', 'visitors'],
+                'countries' => ['code', 'country', 'views', 'visitors'], 'cities' => ['city', 'country', 'views'], 'hours' => ['hour', 'views']][$what];
             header('Content-Type: text/csv; charset=utf-8');
             header('Content-Disposition: attachment; filename="statistics-' . $what . '.csv"');
             $out = fopen('php://output', 'w');
@@ -941,6 +968,7 @@ final class Admin
         }
         self::view('statistics', [
             'r' => Analytics::report($days), 'on' => Analytics::enabled(), 'keep' => Analytics::retentionDays(), 'admin' => $admin,
+            'geo' => Geo::status(), 'geoOn' => Settings::get('geo_on', '0') === '1', 'geoAuto' => Settings::get('geo_auto', '1') === '1',
         ], 'Statistics');
     }
 

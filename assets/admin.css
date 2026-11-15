@@ -175,3 +175,4 @@ td img.thumb { height: 36px; width: auto; max-width: 90px; object-fit: cover; bo
 .bulk { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
 .tbl-wrap td.sel, .tbl-wrap th.sel { width: 36px; padding-right: 0; }
 .tbl-wrap input[type="checkbox"] { width: 18px; height: 18px; }
+h3 { font-size: 1rem; margin: 18px 0 8px; }

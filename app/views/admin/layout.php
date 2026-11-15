@@ -28,6 +28,7 @@ $items = [
 $items = array_values(array_filter($items, static fn($i) => Roles::can($role, $i[0])));
 $lastGroup = '';
 // Update notice in the menu: from the cached check; the page script refreshes it in the background when it is old.
+$geoDue = Roles::can($role, 'statistics') && Geo::due();
 $updNewer = false;
 $updStale = false;
 if (Roles::can($role, 'update') && Updater::repo() !== '') {
@@ -50,7 +51,7 @@ foreach ($items as $it) {
 <meta name="robots" content="noindex, nofollow">
 <title><?= e($title) ?> – Rider Page</title>
 <link rel="stylesheet" href="<?= e(asset('admin.css')) ?>">
-<script src="<?= e(asset('admin.js')) ?>" defer<?= $updStale ? ' data-update-ping="' . e(url('/admin/update/ping')) . '"' : '' ?>></script>
+<script src="<?= e(asset('admin.js')) ?>" defer<?= $updStale ? ' data-update-ping="' . e(url('/admin/update/ping')) . '"' : '' ?><?= $geoDue ? ' data-geo-ping="' . e(url('/admin/statistics/geoauto')) . '"' : '' ?>></script>
 <noscript><style>.side-nav { display: flex !important; } .menu-btn { display: none !important; }</style></noscript>
 </head>
 <body>
