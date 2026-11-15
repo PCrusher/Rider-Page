@@ -37,7 +37,7 @@ final class QrLogin
         }
         $token = bin2hex(random_bytes(32));
         $id = Db::insert('qr_tokens', ['token_hash' => hash('sha256', $token), 'user_id' => $userId, 'created' => time(), 'ip' => client_ip()]);
-        return ['id' => $id, 'url' => site_origin() . '/admin/qr/login?t=' . $token, 'ttl' => self::TTL];
+        return ['id' => $id, 'url' => trusted_origin() . '/admin/qr/login?t=' . $token, 'ttl' => self::TTL];
     }
 
     private static function valid(array $row): bool

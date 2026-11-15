@@ -3,6 +3,17 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.17.1
+
+Security hardening after a review of login, sessions, forms, uploads and updates.
+
+- **Emails no longer take their links from the Host header.** The password reset link, the QR login link and the address in security emails now use the *Site address* from *Profile* or, if that is empty, the address your admin area was last opened on. Before, someone who sent a forged `Host:` header with a "forgot password" request for your email address could make the link in your email point to their own site. A malformed Host header is ignored everywhere.
+- **Login attempts are also limited per account** (20 wrong passwords in 15 minutes, from any addresses), not only per address. Before, a guessing attack spread over many addresses was not slowed down.
+- **An unknown email address takes as long to answer as a wrong password,** so the login page no longer shows which addresses have an account.
+- **New response headers:** `Permissions-Policy` (camera, microphone, location and more are off) and `Cross-Origin-Opener-Policy`. Sessions now use strict mode and cookies only.
+- **The template folder is blocked from direct access** (`themes/views/.htaccess`).
+- No database change.
+
 ## 0.17.0
 
 - **Visits by hour** (*Statistics*): a chart of the last 24 hours and a chart of the busiest hours of the day over the chosen period (7, 30 or 90 days).

@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "Statistics get charts for visits by hour and optional country and city of visitors, found with a GeoLite2 database on your own server that is downloaded and updated from the admin area. The IP address is never stored.",
+  "changelog": "Security hardening: email links no longer use a forged Host header, login attempts are limited per account, unknown emails take as long as wrong passwords, new security headers, template folder blocked.",
   "warnings": []
 }

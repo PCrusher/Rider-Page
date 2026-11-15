@@ -20,7 +20,7 @@ final class Notify
         if ($to === '') {
             return;
         }
-        $body = $text . "\n\n--\n" . self::site() . "\n" . site_origin() . "/admin\n";
+        $body = $text . "\n\n--\n" . self::site() . "\n" . trusted_origin() . "/admin\n";
         [$ok, $err] = Mailer::send($to, '[' . self::site() . '] ' . $subject, $body);
         if (!$ok) {
             error_log('Security email could not be sent: ' . $err);

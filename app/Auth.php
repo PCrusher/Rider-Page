@@ -4,7 +4,15 @@ declare(strict_types=1);
 final class Auth
 {
     private const MAX_FAILS = 8;
+    private const MAX_ACCOUNT_FAILS = 20;
     private const WINDOW = 900;
+
+    private static function dummyHash(): string
+    {
+        static $h = null;
+        return $h ??= password_hash('not-a-real-password', PASSWORD_DEFAULT);
+    }
+
     /** A login that was not used for this many days ends by itself. */
     private const IDLE_DAYS = 30;
 
@@ -56,18 +64,25 @@ final class Auth
     public static function attempt(string $email, string $password): bool|string
     {
         $ip = client_ip();
+        $email = strtolower(trim($email));
+        $acct = 'e:' . substr(hash('sha256', $email), 0, 20);
         Db::delete('login_attempts', 'ts < ?', [time() - self::WINDOW]);
         $fails = (int)Db::val('SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND ts >= ?', [$ip, time() - self::WINDOW]);
-        if ($fails >= self::MAX_FAILS) {
+        // Also limit per account, so a spread-out guessing attack from many addresses is slowed down as well.
+        $acctFails = (int)Db::val('SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND ts >= ?', [$acct, time() - self::WINDOW]);
+        if ($fails >= self::MAX_FAILS || $acctFails >= self::MAX_ACCOUNT_FAILS) {
             return 'Too many failed attempts. Please wait 15 minutes and try again.';
         }
-        $row = Db::row('SELECT id, password_hash FROM users WHERE email = ?', [strtolower(trim($email))]);
-        $ok = $row && password_verify($password, (string)$row['password_hash']);
+        $row = Db::row('SELECT id, password_hash FROM users WHERE email = ?', [$email]);
+        // An unknown email takes as long as a wrong password, so the answer time does not reveal which addresses exist.
+        $ok = password_verify($password, $row ? (string)$row['password_hash'] : self::dummyHash()) && $row;
         if (!$ok) {
             Db::insert('login_attempts', ['ip' => $ip, 'ts' => time()]);
+            Db::insert('login_attempts', ['ip' => $acct, 'ts' => time()]);
             return 'Email or password is not correct.';
         }
         Db::delete('login_attempts', 'ip = ?', [$ip]);
+        Db::delete('login_attempts', 'ip = ?', [$acct]);
         if (password_needs_rehash((string)$row['password_hash'], PASSWORD_DEFAULT)) {
             Db::update('users', ['password_hash' => password_hash($password, PASSWORD_DEFAULT)], 'id = ?', [(int)$row['id']]);
         }

@@ -61,8 +61,26 @@ function site_origin(): string
     if ($custom !== '') {
         return rtrim($custom, '/');
     }
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+    if (!preg_match('/^[A-Za-z0-9.-]{1,253}(:\d{1,5})?$/', $host)) {
+        $host = 'localhost';
+    }
     return (is_https() ? 'https://' : 'http://') . $host . rp_base();
+}
+
+/**
+ * The address to put into emails (reset links, QR links). The Host header comes from the visitor and can be forged,
+ * so a link built from it could point at an attacker's site. Uses the site address from the settings, or the address
+ * an admin was last seen on, and only falls back to the Host header when neither is known yet.
+ */
+function trusted_origin(): string
+{
+    $custom = trim((string)Settings::get('site_url', ''));
+    if ($custom !== '') {
+        return rtrim($custom, '/');
+    }
+    $known = trim((string)Settings::get('known_origin', ''));
+    return $known !== '' ? rtrim($known, '/') : site_origin();
 }
 
 function client_ip(): string
@@ -89,6 +107,8 @@ function send_headers(bool $admin = false): void
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('X-Frame-Options: SAMEORIGIN');
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+    header('Cross-Origin-Opener-Policy: same-origin');
     $style = $admin ? "'self' 'unsafe-inline'" : "'self' 'nonce-" . rp_nonce() . "'";
     header(
         "Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src $style; script-src 'self'; "
@@ -112,6 +132,8 @@ function rp_session(): void
     if (is_dir($dir) && is_writable($dir)) {
         session_save_path($dir);
     }
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
     session_name('rp_session');
     session_set_cookie_params([
         'lifetime' => 0,

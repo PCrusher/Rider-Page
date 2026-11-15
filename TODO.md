@@ -13,12 +13,23 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - [!] Favicon upload and a default share image for links on social media (the site has neither)
 - [ ] Contact messages: delete automatically after the period set in the privacy policy, export and delete everything of one person
 - [ ] Backup download in the admin (database and uploads as one zip) next to the restore button
-- [ ] Setting to redirect to HTTPS and send the HSTS header
+- [!] Setting to redirect to HTTPS and send the HSTS header (the login cookie is already Secure on https, but nothing forces https)
 - [ ] Privacy policy template: mention that admin logins store IP address and browser for the device list
 - [ ] Email page: check SPF and DKIM of the sender domain and warn when contact mails are likely to land in spam
 - [ ] GitHub Actions: move to newer action versions (GitHub warns that Node 20 is being retired)
 - [ ] Admin area in German (the public texts already have English and German)
 - [ ] Restore button in *Updates*: restore a backup from `storage/backups` without FTP
+
+## Security ideas
+
+- [ ] Refuse passwords from a list of the most common ones; ask for a stronger one than 10 characters of lowercase letters
+- [ ] Login limit behind a proxy or CDN: use the real visitor address from a trusted header (Cloudflare, Forwarded) when the owner says so
+- [ ] Email on repeated failed logins for an account
+- [ ] Admin session: shorter idle time (now 30 days) and ask for the password again for sensitive actions (users, updates, email settings)
+- [ ] Check at install and in the admin that `storage/` is really not downloadable (fetch `storage/config.php` and warn)
+- [ ] Encrypt SMTP password at rest like the two-factor key
+- [ ] Image uploads: lower the pixel limit for authors, to protect small hosts from memory exhaustion
+- [ ] Content-Security-Policy report-only mode to find problems before tightening
 
 ## Features
 
@@ -126,3 +137,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.15.0: spam score with a Spam tab for the contact form (held, not emailed), invisible proof-of-work puzzle
 - 0.16.0: background update check with a badge in the admin menu, bulk select and delete in Messages
 - 0.17.0: statistics by hour, country and city from a GeoLite2 database on the own server (downloaded and updated from the admin area)
+\n- 0.17.1: security hardening (trusted address for email links, per-account login limit, same answer time for unknown emails, extra headers)\n

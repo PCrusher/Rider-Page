@@ -124,6 +124,10 @@ final class Admin
         if ($post) {
             csrf_check();
         }
+        if (trim((string)Settings::get('known_origin', '')) === '' && trim((string)Settings::get('site_url', '')) === '') {
+            // Remember the address the owner uses, so emails never take their links from a forged Host header.
+            Settings::set('known_origin', site_origin());
+        }
 
         $parts = explode('/', trim($path, '/'));
         $sec = $parts[1] ?? '';

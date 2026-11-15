@@ -103,6 +103,32 @@ try {
     check(is_file($tmp . '/storage/config.php'), 'config.php written');
     check(Migrator::run() === [], 'migrations are idempotent');
     check(Auth::attempt('admin@example.com', 'wrong') !== true, 'wrong password is rejected');
+    $oldAddr = $_SERVER['REMOTE_ADDR'] ?? null;
+    for ($i = 1; $i <= 20; $i++) {
+        $_SERVER['REMOTE_ADDR'] = '198.18.0.' . $i;
+        Auth::attempt('lock-test@example.com', 'wrong');
+    }
+    $_SERVER['REMOTE_ADDR'] = '198.18.1.1';
+    check(str_contains((string)Auth::attempt('lock-test@example.com', 'wrong'), 'Too many'), 'guessing at one account from many addresses is slowed down');
+    check(Auth::attempt('admin@example.com', 'wrong') !== true, 'other accounts are not locked by it');
+    Db::run('DELETE FROM login_attempts');
+    if ($oldAddr === null) {
+        unset($_SERVER['REMOTE_ADDR']);
+    } else {
+        $_SERVER['REMOTE_ADDR'] = $oldAddr;
+    }
+    $oldHost = $_SERVER['HTTP_HOST'];
+    $_SERVER['HTTP_HOST'] = 'evil.example';
+    check(!str_contains(site_origin(), ' ') && str_contains(trusted_origin(), 'evil.example'), 'before an admin address is known the host header is used');
+    Settings::set('known_origin', 'https://my-real-site.example');
+    check(trusted_origin() === 'https://my-real-site.example', 'emails use the remembered address, not a forged Host header');
+    Settings::set('site_url', 'https://custom.example/');
+    check(trusted_origin() === 'https://custom.example', 'the site address from the settings wins');
+    Settings::set('site_url', '');
+    Settings::set('known_origin', '');
+    $_SERVER['HTTP_HOST'] = "bad host\r\nX: y";
+    check(site_origin() === 'http://localhost', 'a malformed Host header is ignored');
+    $_SERVER['HTTP_HOST'] = $oldHost;
 
     echo "Public pages\n";
     $r = Site::response('/');

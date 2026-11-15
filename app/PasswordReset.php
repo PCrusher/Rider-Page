@@ -37,7 +37,7 @@ final class PasswordReset
                 $email,
                 '[' . $site . '] Reset your password',
                 "Someone asked to reset the password of your admin account.\n\nOpen this link within 60 minutes to choose a new password:\n"
-                . site_origin() . '/admin/reset?t=' . $token . "\n\nIf you did not ask for this, ignore this email. Your password stays as it is.\n\n--\n" . $site . "\n"
+                . trusted_origin() . '/admin/reset?t=' . $token . "\n\nIf you did not ask for this, ignore this email. Your password stays as it is.\n\n--\n" . $site . "\n"
             );
             if (!$ok) {
                 error_log('Password reset email could not be sent: ' . $err);
