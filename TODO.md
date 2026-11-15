@@ -137,4 +137,5 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.15.0: spam score with a Spam tab for the contact form (held, not emailed), invisible proof-of-work puzzle
 - 0.16.0: background update check with a badge in the admin menu, bulk select and delete in Messages
 - 0.17.0: statistics by hour, country and city from a GeoLite2 database on the own server (downloaded and updated from the admin area)
-\n- 0.17.1: security hardening (trusted address for email links, per-account login limit, same answer time for unknown emails, extra headers)\n
+
+- 0.17.1: security hardening (trusted address for email links, per-account login limit, same answer time for unknown emails, extra headers)
