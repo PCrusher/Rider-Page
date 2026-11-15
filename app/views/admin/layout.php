@@ -9,6 +9,7 @@ $items = [
     ['stats', 'Results', '/admin/stats', 'Content'],
     ['sponsors', 'Partners', '/admin/sponsors', 'Content'],
     ['media', 'Photos', '/admin/media', 'Content'],
+    ['images', 'Images', '/admin/images', 'Content'],
     ['messages', 'Messages', '/admin/messages', 'Content'],
     ['posts', 'Blog', '/admin/posts', 'Content'],
     ['faqs', 'FAQ', '/admin/faqs', 'Content'],

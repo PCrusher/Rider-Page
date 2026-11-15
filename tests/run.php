@@ -820,8 +820,29 @@ try {
     } catch (RuntimeException) {
         check(true, 'non-image is rejected');
     }
+    $orig = Images::original($rel);
+    check($orig !== null && $orig['ext'] === 'png' && filesize($orig['path']) === filesize($png), 'the untouched original is kept');
+    check(!is_file($tmp . '/uploads/' . basename($orig['path'])) && str_starts_with($orig['path'], $tmp . '/storage/originals/'), 'the original is outside the public uploads folder');
+    $rel2 = Images::process($png, false, "My holiday?.png");
+    check(Images::original($rel2)['name'] === 'My holiday_.png' && count(Images::originals()) === 2, 'the original file name is kept in a safe form and listed');
+    Settings::set('img_max', '1200');
+    Settings::set('img_quality', '70');
+    $rel3 = Images::process($png);
+    [$w3] = getimagesize($tmp . '/' . $rel3);
+    check($w3 === 1200 && filesize($tmp . '/' . $rel3) < filesize($tmp . '/' . $rel), 'the size and quality settings apply to new uploads');
+    Settings::set('img_max', '999');
+    check(Images::maxSize() === 1800, 'an invalid size falls back to the default');
+    Settings::set('img_keep', '0');
+    $rel4 = Images::process($png);
+    check(Images::original($rel4) === null, 'originals are not kept when the option is off');
+    Settings::setMany(['img_keep' => '1', 'img_max' => '1800', 'img_quality' => '84']);
     delete_upload($rel);
-    check(!is_file($tmp . '/' . $rel), 'delete_upload removes files');
+    check(!is_file($tmp . '/' . $rel) && Images::original($rel) === null, 'delete_upload removes the files and the original');
+    foreach ([$rel2, $rel3, $rel4] as $r) {
+        delete_upload($r);
+    }
+    check(Images::originals() === [], 'no originals are left over');
+    check(Images::original('../../storage/config') === null && Images::original('uploads/../x.jpg') === null, 'only valid names are accepted for downloads');
 
     echo "Update\n";
     $build = static function (string $version, array $extraFiles, string $name) use ($tmp): string {

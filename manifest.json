@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "Security hardening: email links no longer use a forged Host header, login attempts are limited per account, unknown emails take as long as wrong passwords, new security headers, template folder blocked.",
+  "changelog": "Originals of uploaded pictures are kept privately and can be downloaded on the new Images page. The size and quality of the pictures on the page can be set.",
   "warnings": []
 }

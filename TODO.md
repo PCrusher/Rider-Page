@@ -96,7 +96,8 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 ## Performance and SEO
 
 - [ ] Cache rendered pages as files, clear on every admin change
-- [ ] WebP versions of uploaded images, `srcset` for responsive sizes
+- [ ] WebP versions of uploaded images, `srcset` for responsive sizes (originals and a size setting exist since 0.18.0)
+- [ ] Images: re-create the page pictures from the originals after changing the size setting; upload originals for existing pictures
 - [ ] Image dimensions in the HTML to avoid layout shift
 - [ ] Check structured data with Google's Rich Results Test and fix warnings
 - [ ] Sitemap: add last-modified from real edit dates
@@ -139,3 +140,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.17.0: statistics by hour, country and city from a GeoLite2 database on the own server (downloaded and updated from the admin area)
 
 - 0.17.1: security hardening (trusted address for email links, per-account login limit, same answer time for unknown emails, extra headers)
+- 0.18.0: originals of uploads kept privately with download on the Images page, setting for page picture size and quality

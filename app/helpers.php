@@ -308,4 +308,5 @@ function delete_upload(?string $rel): void
             @unlink($f);
         }
     }
+    Images::deleteOriginal($rel);
 }

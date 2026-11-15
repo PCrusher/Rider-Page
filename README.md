@@ -58,6 +58,7 @@ Open `/admin` on your site.
 | Updates | Check for and install new versions; shows what is new and the history of every version |
 | Statistics | Cookie-free visit statistics: views, visitors, visits by hour, optional country and city, sources, devices, clicks on partner and social links |
 | Cookie notice | An optional bar that informs visitors about cookies and data |
+| Images | Download the untouched originals of your uploads; choose the size and quality of the pictures on the page |
 | Messages, Email | Inbox for the contact form with a Spam tab for suspicious messages; SMTP settings so messages reach you reliably |
 | Pages, Legal pages | Own pages (about, legal notice, privacy). Guided set-up of the legal pages for your country, as drafts you review and publish |
 | Users | Add people and give them a level: Admin, Editor or Author (admins only) |
@@ -92,7 +93,7 @@ over the existing ones. Database changes run on the next page load. Never overwr
 
 ## Backups
 
-The updater makes a backup before every update. For regular backups, copy the `storage` and `uploads` folders
+The updater makes a backup before every update (code and database, not your pictures or their originals). For regular backups, copy the `storage` and `uploads` folders (`storage/originals` holds the full-quality originals of your uploads)
 (SQLite keeps the whole database inside `storage`; with MySQL also export the database).
 
 ## Privacy and security

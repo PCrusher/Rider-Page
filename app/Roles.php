@@ -27,6 +27,7 @@ final class Roles
         'stats' => self::STAFF,
         'sponsors' => self::STAFF,
         'media' => self::STAFF,
+        'images' => self::STAFF,
         'faqs' => self::STAFF,
         'sections' => self::STAFF,
         'errorpage' => self::STAFF,

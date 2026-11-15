@@ -173,6 +173,8 @@ final class Admin
             self::pages($act, $post);
         } elseif ($sec === 'legal') {
             self::legal($post);
+        } elseif ($sec === 'images') {
+            self::images($act, $post);
         } elseif ($sec === 'messages') {
             self::messages($act, $post);
         } elseif ($sec === 'email') {
@@ -1150,6 +1152,60 @@ final class Admin
                 'f_contact_form' => Legal::feature('contact_form'), 'f_youtube' => Legal::feature('youtube'), 'f_sponsors' => Legal::feature('sponsors'),
             ],
         ], 'Legal pages');
+    }
+
+    /* ---------- images: size settings and the stored originals ---------- */
+
+    private static function images(string $act, bool $post): void
+    {
+        $admin = self::$user['role'] === 'admin';
+        if (!$post && $act === 'get') {
+            $o = Images::original((string)($_GET['f'] ?? ''));
+            if (!$o) {
+                http_response_code(404);
+                exit('Not found.');
+            }
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_write_close();
+            }
+            $types = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp'];
+            header('Content-Type: ' . ($types[$o['ext']] ?? 'application/octet-stream'));
+            header('Content-Length: ' . filesize($o['path']));
+            header('Content-Disposition: attachment; filename="' . str_replace(['"', '\\'], '_', $o['name']) . '"');
+            header('X-Content-Type-Options: nosniff');
+            readfile($o['path']);
+            exit;
+        }
+        if ($post) {
+            if ($act === 'settings') {
+                if (!$admin) {
+                    flash('Only admins can change the image settings.', 'error');
+                    redirect('/admin/images');
+                }
+                $max = (int)($_POST['img_max'] ?? 1800);
+                Settings::setMany([
+                    'img_max' => (string)(in_array($max, Images::SIZES, true) ? $max : 1800),
+                    'img_quality' => (string)max(60, min(95, (int)($_POST['img_quality'] ?? 84))),
+                    'img_keep' => !empty($_POST['img_keep']) ? '1' : '0',
+                ]);
+                flash('Saved. New uploads use these settings; pictures that are already on the page stay as they are.');
+            } elseif ($act === 'delete') {
+                Images::deleteOriginal((string)($_POST['f'] ?? ''));
+                flash('The original was deleted. The picture on your page is not affected.');
+            } elseif ($act === 'deleteall') {
+                foreach (Images::originals() as $o) {
+                    Images::deleteOriginal($o['name']);
+                }
+                flash('All originals were deleted. The pictures on your page are not affected.');
+            }
+            redirect('/admin/images');
+        }
+        $list = Images::originals();
+        self::view('images', [
+            'list' => array_slice($list, 0, 200), 'count' => count($list), 'bytes' => array_sum(array_column($list, 'size')),
+            'max' => Images::maxSize(), 'quality' => Images::quality(), 'keep' => Images::keepOriginals(), 'admin' => $admin,
+            'gd' => Images::available(),
+        ], 'Images');
     }
 
     /* ---------- contact messages and email settings ---------- */

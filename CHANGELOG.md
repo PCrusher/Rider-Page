@@ -3,6 +3,14 @@
 Versions follow semantic versioning. Patch and minor releases are safe to install on any
 site. A major release may contain breaking changes and says so in `manifest.json`.
 
+## 0.18.0
+
+- **Originals are kept.** Every new upload is saved twice: a smaller copy for your page, and the untouched original in `storage/originals`, where visitors can not reach it. The new *Images* page (*Content* menu) lists the originals with a small preview, the original file name and size, and a *Download* button for the full-quality file. Individual originals or all of them can be deleted; the pictures on your page stay.
+- **Size and quality are your choice** (*Images -> Settings*, admins): longest side of the page pictures 1200, 1600, 1800 (default) or 2400 px, JPEG quality 60 to 95 (default 84), and a switch to stop keeping originals when your hosting has little space. Previews of 800 px are always made. Changes apply to new uploads.
+- Original files can contain the place where a photo was taken. They are never public, and the pictures on your page still have that data removed.
+- Pictures uploaded before this version have no original. Backups made by the updater do not include originals; copy `storage/originals` yourself if you want them in your own backup.
+- No database change.
+
 ## 0.17.1
 
 Security hardening after a review of login, sessions, forms, uploads and updates.
