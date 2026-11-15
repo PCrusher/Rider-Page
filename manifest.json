@@ -1,9 +1,9 @@
 {
   "name": "Rider Page",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "repo": "PCrusher/Rider-Page",
   "min_php": "8.1",
   "breaking": false,
-  "changelog": "Spam tab for the contact form: suspicious messages are kept apart and not emailed, with Not spam and Delete all. An invisible proof-of-work puzzle (no captcha, no third party) stops bots that post directly.",
+  "changelog": "A background check for new versions marks Updates in the admin menu, and Messages can be selected and deleted in bulk.",
   "warnings": []
 }

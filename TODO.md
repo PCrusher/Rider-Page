@@ -124,3 +124,4 @@ Priority: `[!]` do soon, `[ ]` open, `[?]` idea to decide on.
 - 0.13.0: two-factor login (TOTP with recovery codes), forgot password with email link and recovery file, security emails
 - 0.14.0: Paddock layout (dark photo hero, name bottom right, copper or ice accent) and a small line under the name
 - 0.15.0: spam score with a Spam tab for the contact form (held, not emailed), invisible proof-of-work puzzle
+- 0.16.0: background update check with a badge in the admin menu, bulk select and delete in Messages
